@@ -295,6 +295,11 @@
         .progress-bar { width:100%; height:10px; background:var(--border); border-radius:5px; overflow:hidden; margin:12px 0; }
         .progress-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--wp)); border-radius:5px; transition:width 0.5s ease; width:0%; }
 
+        /* ========== QR CODE ========== */
+        .qr-container { text-align:center; padding:20px; }
+        .qr-box { display:inline-block; background:#fff; padding:16px; border-radius:16px; margin:16px 0; }
+        .qr-box img { max-width:280px; display:block; }
+
         /* ========== TOAST ========== */
         .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column-reverse; gap:8px; }
         .toast { padding:14px 20px; border-radius:10px; font-size:13px; font-weight:500; background:var(--bg2); border:1px solid var(--wp); color:var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation:slideIn 0.35s ease; max-width:420px; }
@@ -324,9 +329,9 @@
         <div class="nav-item active" data-page="dashboard">
             <span>📊</span> Dashboard
         </div>
-        <div class="nav-item" data-page="config-api">
-            <span>🔑</span> Configurar API
-            <span class="nav-badge" id="navApiStatus" style="background:var(--yellow)">?</span>
+        <div class="nav-item" data-page="conexao">
+            <span>🔗</span> Conexão WhatsApp
+            <span class="nav-badge" id="navStatus" style="background:var(--red)">OFF</span>
         </div>
         <div class="nav-section">Disparos</div>
         <div class="nav-item" data-page="disparo">
@@ -358,12 +363,12 @@
     <div class="topbar">
         <div>
             <div class="topbar-title" id="topbar-title">Dashboard</div>
-            <div class="topbar-sub" id="topbar-sub">Sistema de Disparo WhatsApp - CallMeBot API</div>
+            <div class="topbar-sub" id="topbar-sub">Sistema de Disparo WhatsApp - Conexão Real</div>
         </div>
         <div class="topbar-actions">
-            <span class="status-badge offline" id="apiStatusBadge">
+            <span class="status-badge offline" id="wpStatusBadge">
                 <span class="status-dot offline"></span>
-                <span id="apiStatusText">API não configurada</span>
+                <span id="wpStatusText">WhatsApp Desconectado</span>
             </span>
             <span class="topbar-clock" id="clock">00:00:00</span>
         </div>
@@ -376,7 +381,7 @@
                 <div class="stat-card green">
                     <div class="stat-label">✅ Enviados Hoje</div>
                     <div class="stat-value" id="dashEnviados">0</div>
-                    <div class="stat-delta">Mensagens enviadas via API</div>
+                    <div class="stat-delta">Mensagens enviadas com sucesso</div>
                 </div>
                 <div class="stat-card blue">
                     <div class="stat-label">📝 Templates</div>
@@ -391,7 +396,7 @@
                 <div class="stat-card red">
                     <div class="stat-label">📤 Total Enviado</div>
                     <div class="stat-value" id="dashTotal">0</div>
-                    <div class="stat-delta">Histórico total</div>
+                    <div class="stat-delta">Histórico total de envios</div>
                 </div>
             </div>
             <div class="grid-2">
@@ -400,9 +405,9 @@
                     <div class="panel-body">
                         <div class="table-wrap">
                             <table>
-                                <thead><tr><th>Data</th><th>Cliente</th><th>Telefone</th><th>Status</th></tr></thead>
+                                <thead><tr><th>Data/Hora</th><th>Cliente</th><th>Telefone</th><th>Status</th></tr></thead>
                                 <tbody id="dashUltimos">
-                                    <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)"><div class="empty-state-icon">📭</div>Nenhum envio ainda</td></tr>
+                                    <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)"><div class="empty-state-icon">📭</div>Nenhum envio realizado</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -411,47 +416,34 @@
                 <div class="panel">
                     <div class="panel-header"><div class="panel-title">📋 Resumo do Sistema</div></div>
                     <div class="panel-body" id="dashResumo">
-                        <div class="empty-state"><div class="empty-state-icon">📱</div>Carregando...</div>
+                        <div class="empty-state"><div class="empty-state-icon">📱</div>Carregando informações...</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ==================== CONFIG API ==================== -->
-        <div class="screen" id="screen-config-api">
+        <!-- ==================== CONEXÃO ==================== -->
+        <div class="screen" id="screen-conexao">
             <div class="alert alert-yellow">
-                <span class="alert-icon">⚙️</span>
+                <span class="alert-icon">🔗</span>
                 <span>
-                    <b>Configuração da API CallMeBot</b><br><br>
-                    <b>Passo 1:</b> Adicione o número <b>+34 644 51 95 23</b> no seu WhatsApp<br>
-                    <b>Passo 2:</b> Envie a mensagem: <b>I allow callmebot to send me messages</b><br>
-                    <b>Passo 3:</b> Você receberá uma <b>API Key</b><br>
-                    <b>Passo 4:</b> Cole a API Key abaixo<br>
-                    <b>Passo 5:</b> Cole a URL do seu servidor Render
+                    <b>Conexão WhatsApp</b> - Escaneie o QR Code abaixo com seu WhatsApp<br><br>
+                    <b>Passo 1:</b> Abra o WhatsApp no celular<br>
+                    <b>Passo 2:</b> Vá em <b>Aparelhos conectados</b><br>
+                    <b>Passo 3:</b> Toque em <b>Conectar um aparelho</b><br>
+                    <b>Passo 4:</b> Aponte a câmera para o QR Code
                 </span>
             </div>
             <div class="panel">
-                <div class="panel-header"><div class="panel-title">🔑 Configuração</div></div>
+                <div class="panel-header"><div class="panel-title">📱 QR Code de Conexão</div></div>
                 <div class="panel-body">
-                    <div class="form-group">
-                        <label class="form-label form-label-required">URL do Servidor Render</label>
-                        <input class="form-input" id="cfgServerUrl" placeholder="https://seu-app.onrender.com">
-                        <div class="form-hint">Ex: https://ademicon.onrender.com</div>
+                    <div class="qr-container">
+                        <div class="qr-box" id="qrBox">
+                            <p style="color:#666;padding:20px">Gerando QR Code...</p>
+                        </div>
+                        <button class="btn btn-wp btn-lg" onclick="reconectarWhatsApp()">🔄 Gerar Novo QR Code</button>
+                        <button class="btn btn-danger btn-lg" style="margin-left:8px" onclick="desconectarWhatsApp()">🔌 Desconectar</button>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label form-label-required">Sua API Key do CallMeBot</label>
-                        <input class="form-input" id="cfgApiKey" placeholder="Cole aqui a API Key recebida...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label form-label-required">Seu Número WhatsApp (com DDD)</label>
-                        <input class="form-input" id="cfgPhone" placeholder="5511999999999">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Intervalo entre envios (segundos)</label>
-                        <input class="form-input" id="cfgIntervalo" type="number" value="30" min="10" max="300">
-                        <div class="form-hint">Recomendado: 30 segundos para evitar bloqueio</div>
-                    </div>
-                    <button class="btn btn-success btn-block btn-lg" id="btnSalvarApi">💾 Salvar Configurações</button>
                 </div>
             </div>
         </div>
@@ -460,7 +452,7 @@
         <div class="screen" id="screen-disparo">
             <div class="alert alert-blue">
                 <span class="alert-icon">📩</span>
-                <span><b>Central de Disparo</b> - Envio 100% AUTOMÁTICO via servidor</span>
+                <span><b>Central de Disparo</b> - Envio 100% AUTOMÁTICO pelo servidor</span>
             </div>
             <div class="panel">
                 <div class="panel-header"><div class="panel-title">⚙️ Configurar Disparo</div></div>
@@ -468,6 +460,11 @@
                     <div class="form-group">
                         <label class="form-label form-label-required">Template da Mensagem</label>
                         <select class="form-select" id="disparoTemplate"><option value="">Selecione um template...</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Intervalo entre envios (segundos)</label>
+                        <input class="form-input" id="disparoIntervalo" type="number" value="30" min="10" max="300">
+                        <div class="form-hint">Recomendado: 30-60 segundos para evitar bloqueio</div>
                     </div>
                     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
                         <button class="btn btn-ghost" onclick="selTodos()">✅ Selecionar Todos</button>
@@ -506,7 +503,7 @@
                 <span><b>Fila de Envio Automático</b> - Mensagens sendo enviadas pelo servidor</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="filaProgresso"></div></div>
-            <div style="text-align:center;color:var(--text2);margin:8px 0;font-size:14px;font-weight:600" id="filaStatus">Aguardando início...</div>
+            <div style="text-align:center;color:var(--text2);margin:8px 0;font-size:14px;font-weight:600" id="filaStatus">Aguardando início do disparo...</div>
             <div class="panel">
                 <div class="panel-header"><div class="panel-title">📤 Log de Envios</div></div>
                 <div class="panel-body">
@@ -514,7 +511,7 @@
                         <table>
                             <thead><tr><th>#</th><th>Cliente</th><th>Telefone</th><th>Status</th></tr></thead>
                             <tbody id="filaTbody">
-                                <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Fila vazia</td></tr>
+                                <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Fila vazia - Inicie um disparo</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -530,7 +527,8 @@
             <div class="grid-2" id="templatesGrid">
                 <div class="empty-state" style="grid-column:1/-1">
                     <div class="empty-state-icon">📝</div>
-                    Nenhum template criado ainda
+                    Nenhum template criado ainda<br>
+                    <small>Clique em "Novo Template" para começar</small>
                 </div>
             </div>
         </div>
@@ -538,7 +536,7 @@
         <!-- ==================== CLIENTES ==================== -->
         <div class="screen" id="screen-clientes">
             <div class="search-bar">
-                <input class="search-input" placeholder="🔍 Buscar cliente..." id="searchClientes">
+                <input class="search-input" placeholder="🔍 Buscar cliente por nome..." id="searchClientes">
                 <button class="btn btn-primary" id="btnAddCliente">＋ Novo Cliente</button>
                 <button class="btn btn-ghost" id="btnImportCSV">📥 Importar CSV</button>
             </div>
@@ -552,7 +550,7 @@
                         <table>
                             <thead><tr><th>Nome</th><th>Telefone</th><th>Cidade</th><th>Data Cadastro</th><th>Ações</th></tr></thead>
                             <tbody id="clientesTbody">
-                                <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Nenhum cliente</td></tr>
+                                <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Nenhum cliente cadastrado</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -637,6 +635,7 @@ Aguardo seu retorno! 💙</textarea>
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ==================== SCRIPTS ==================== -->
+<script src="/socket.io/socket.io.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -655,11 +654,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// ==================== SOCKET.IO ====================
+const socket = io();
+
 // ==================== VARIÁVEIS GLOBAIS ====================
-let serverUrl = '';
-let apiKey = '';
-let apiPhone = '';
-let apiIntervalo = 30;
+let whatsappReady = false;
 let templates = [];
 let clientes = [];
 let enviando = false;
@@ -700,24 +699,47 @@ function toArray(obj) {
     return Object.values(obj);
 }
 
-function atualizarStatusAPI() {
-    const badge = $('apiStatusBadge');
-    const text = $('apiStatusText');
-    const dot = badge.querySelector('.status-dot');
-    const nav = $('navApiStatus');
+// ==================== WHATSAPP STATUS (SOCKET) ====================
+socket.on('whatsapp-status', (status) => {
+    console.log('📱 Status WhatsApp:', status);
+    whatsappReady = status.connected;
     
-    if (serverUrl && apiKey && apiPhone) {
+    const badge = $('wpStatusBadge');
+    const text = $('wpStatusText');
+    const dot = badge.querySelector('.status-dot');
+    const nav = $('navStatus');
+    
+    if (status.connected) {
         badge.className = 'status-badge online';
         dot.className = 'status-dot online';
-        text.textContent = 'API Configurada ✓';
+        text.textContent = 'Conectado - ' + (status.phone || 'WhatsApp');
         nav.style.background = 'var(--green)';
         nav.textContent = 'ON';
+        $('qrBox').innerHTML = '<p style="color:var(--green);font-size:18px;font-weight:600">✅ WhatsApp Conectado!</p><p style="color:var(--text3);font-size:12px">' + (status.name || '') + '</p>';
     } else {
         badge.className = 'status-badge offline';
         dot.className = 'status-dot offline';
-        text.textContent = 'API não configurada';
-        nav.style.background = 'var(--yellow)';
-        nav.textContent = '?';
+        text.textContent = 'WhatsApp Desconectado';
+        nav.style.background = 'var(--red)';
+        nav.textContent = 'OFF';
+    }
+    
+    if (status.qr) {
+        $('qrBox').innerHTML = `<img src="${status.qr}" alt="QR Code" style="max-width:280px;"><p style="color:var(--text3);font-size:11px;margin-top:8px">Escaneie com seu WhatsApp</p>`;
+    }
+});
+
+// ==================== RECONECTAR / DESCONECTAR ====================
+function reconectarWhatsApp() {
+    socket.emit('reconnect-whatsapp');
+    $('qrBox').innerHTML = '<p style="color:#666;padding:20px">Gerando novo QR Code...</p>';
+    toast('Gerando novo QR Code...', 'info');
+}
+
+function desconectarWhatsApp() {
+    if (confirm('Tem certeza que deseja desconectar o WhatsApp?')) {
+        socket.emit('disconnect-whatsapp');
+        toast('WhatsApp desconectado!', 'info');
     }
 }
 
@@ -734,7 +756,7 @@ function go(page) {
     
     const titles = {
         'dashboard': 'Dashboard',
-        'config-api': 'Configurar API',
+        'conexao': 'Conexão WhatsApp',
         'disparo': 'Central de Disparo',
         'fila': 'Fila de Envio',
         'templates': 'Templates',
@@ -742,12 +764,12 @@ function go(page) {
     };
     
     $('topbar-title').textContent = titles[page] || 'ADEMICON';
-    $('topbar-sub').textContent = 'Sistema de Disparo WhatsApp - CallMeBot API';
+    $('topbar-sub').textContent = 'Sistema de Disparo WhatsApp - Conexão Real';
     
     if (page === 'disparo') { renderSelects(); renderDisparo(); }
+    if (page === 'fila') renderFila();
     if (page === 'templates') renderTemplates();
     if (page === 'clientes') renderClientes();
-    if (page === 'config-api') carregarConfigTela();
     if (page === 'dashboard') renderDashboard();
 }
 
@@ -757,203 +779,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
         if (page) go(page);
     });
 });
-
-// ==================== CONFIG API ====================
-function carregarConfigTela() {
-    $('cfgServerUrl').value = serverUrl;
-    $('cfgApiKey').value = apiKey;
-    $('cfgPhone').value = apiPhone;
-    $('cfgIntervalo').value = apiIntervalo;
-}
-
-async function salvarConfigAPI() {
-    serverUrl = $('cfgServerUrl').value.trim().replace(/\/$/, '');
-    apiKey = $('cfgApiKey').value.trim();
-    apiPhone = $('cfgPhone').value.trim();
-    apiIntervalo = parseInt($('cfgIntervalo').value) || 30;
-    
-    if (!serverUrl) { toast('Preencha a URL do servidor!', 'err'); return; }
-    if (!apiKey) { toast('Preencha a API Key!', 'err'); return; }
-    if (!apiPhone) { toast('Preencha seu número!', 'err'); return; }
-    
-    // Testar conexão com o servidor
-    try {
-        const testUrl = `${serverUrl}/api/send-whatsapp?phone=${apiPhone}&text=Teste&apikey=${apiKey}`;
-        const response = await fetch(testUrl);
-        const data = await response.json();
-        
-        if (data.success || data.message?.includes('QUEUED')) {
-            await db.ref('config/api').set({ serverUrl, apiKey, apiPhone, apiIntervalo });
-            atualizarStatusAPI();
-            toast('Configurações salvas e testadas com sucesso!', 'ok');
-        } else {
-            toast('Servidor respondeu, mas a API Key pode estar errada. Verifique!', 'warn');
-            await db.ref('config/api').set({ serverUrl, apiKey, apiPhone, apiIntervalo });
-            atualizarStatusAPI();
-        }
-    } catch (error) {
-        console.error('Erro ao testar:', error);
-        toast('Erro ao conectar com o servidor! Verifique a URL.', 'err');
-    }
-}
-
-// ==================== ENVIO VIA SERVIDOR PROXY ====================
-async function enviarMensagemAPI(telefone, mensagem) {
-    if (!serverUrl || !apiKey || !apiPhone) {
-        throw new Error('API não configurada');
-    }
-    
-    const url = `${serverUrl}/api/send-whatsapp?phone=${telefone}&text=${encodeURIComponent(mensagem)}&apikey=${apiKey}`;
-    
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.success || data.message?.includes('QUEUED')) {
-        return true;
-    } else {
-        throw new Error(data.error || data.message || 'Erro desconhecido');
-    }
-}
-
-// ==================== DISPARO AUTOMÁTICO ====================
-async function iniciarDisparo() {
-    if (!serverUrl || !apiKey || !apiPhone) {
-        toast('Configure a API primeiro! Vá em "Configurar API".', 'err');
-        go('config-api');
-        return;
-    }
-    
-    if (enviando) {
-        toast('Já existe um disparo em andamento! Aguarde terminar.', 'warn');
-        return;
-    }
-    
-    const ti = parseInt($('disparoTemplate').value);
-    if (isNaN(ti) || ti < 0 || ti >= templates.length) {
-        toast('Selecione um template válido!', 'err');
-        return;
-    }
-    
-    const checkboxes = document.querySelectorAll('.dcheck:checked');
-    if (checkboxes.length === 0) {
-        toast('Selecione pelo menos um cliente!', 'err');
-        return;
-    }
-    
-    const template = templates[ti];
-    const mensagens = [];
-    
-    checkboxes.forEach(cb => {
-        const idx = parseInt(cb.getAttribute('data-i'));
-        if (idx >= 0 && idx < clientes.length && clientes[idx].tel) {
-            const cliente = clientes[idx];
-            const msg = template.msg
-                .replace(/\{\{nome\}\}/g, cliente.nome)
-                .replace(/\{\{data\}\}/g, new Date().toLocaleDateString('pt-BR'));
-            
-            mensagens.push({
-                nome: cliente.nome,
-                telefone: cliente.tel,
-                mensagem: msg,
-                template: template.nome
-            });
-        }
-    });
-    
-    if (mensagens.length === 0) {
-        toast('Nenhum cliente com telefone válido!', 'err');
-        return;
-    }
-    
-    // Limpar seleção
-    document.querySelectorAll('.dcheck').forEach(c => c.checked = false);
-    updateSel();
-    
-    // Iniciar envio
-    enviando = true;
-    $('btnDisparar').disabled = true;
-    
-    $('filaTbody').innerHTML = mensagens.map((m, i) => `
-        <tr id="fila-row-${i}">
-            <td>${i + 1}</td>
-            <td><b>${m.nome}</b></td>
-            <td class="mono">${m.telefone}</td>
-            <td><span class="badge badge-yellow" id="status-${i}">⏳ Aguardando</span></td>
-        </tr>
-    `).join('');
-    
-    $('filaStatus').textContent = `Iniciando envio de ${mensagens.length} mensagens...`;
-    $('filaProgresso').style.width = '0%';
-    go('fila');
-    
-    let sucessos = 0;
-    let falhas = 0;
-    
-    for (let i = 0; i < mensagens.length; i++) {
-        const m = mensagens[i];
-        
-        const pct = Math.round(((i + 1) / mensagens.length) * 100);
-        $('filaProgresso').style.width = pct + '%';
-        $('filaStatus').textContent = `Enviando ${i + 1} de ${mensagens.length}... (${m.nome})`;
-        
-        const statusCell = document.getElementById('status-' + i);
-        if (statusCell) {
-            statusCell.innerHTML = '<span class="badge badge-yellow">📤 Enviando...</span>';
-        }
-        
-        try {
-            const resultado = await enviarMensagemAPI(m.telefone, m.mensagem);
-            
-            if (resultado) {
-                sucessos++;
-                enviosHoje++;
-                totalEnviado++;
-                
-                if (statusCell) {
-                    statusCell.innerHTML = '<span class="badge badge-green">✅ Enviado</span>';
-                }
-                
-                db.ref('historico').push({
-                    data: new Date().toISOString(),
-                    cliente: m.nome,
-                    telefone: m.telefone,
-                    template: m.template,
-                    status: 'enviado'
-                }).catch(e => console.error('Erro ao salvar histórico:', e));
-                
-            } else {
-                throw new Error('Falha no envio');
-            }
-        } catch (error) {
-            falhas++;
-            console.error(`Erro ao enviar para ${m.nome}:`, error.message);
-            
-            if (statusCell) {
-                statusCell.innerHTML = '<span class="badge badge-red">❌ Falha</span>';
-            }
-        }
-        
-        if (i < mensagens.length - 1) {
-            $('filaStatus').textContent = `Aguardando ${apiIntervalo}s para próximo envio...`;
-            await new Promise(r => setTimeout(r, apiIntervalo * 1000));
-        }
-    }
-    
-    $('filaProgresso').style.width = '100%';
-    $('filaStatus').textContent = `✅ Concluído! ${sucessos} enviadas, ${falhas} falhas`;
-    $('dashEnviados').textContent = fmt(enviosHoje);
-    $('dashTotal').textContent = fmt(totalEnviado);
-    
-    db.ref('config/totalEnviado').set(totalEnviado).catch(e => console.error(e));
-    
-    enviando = false;
-    $('btnDisparar').disabled = false;
-    
-    toast(`${sucessos} mensagens enviadas com sucesso!` + (falhas > 0 ? ` (${falhas} falhas)` : ''), 
-        sucessos > 0 ? 'ok' : 'err');
-    
-    renderDashboard();
-}
 
 // ==================== RENDERIZAÇÕES ====================
 function renderDashboard() {
@@ -973,12 +798,8 @@ function renderDashboard() {
                 <span class="mono">${clientes.length}</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-                <span style="color:var(--text2)">API Configurada</span>
-                <span style="color:${serverUrl && apiKey ? 'var(--green)' : 'var(--red)'};font-weight:600">${serverUrl && apiKey ? '✅ Sim' : '❌ Não'}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-                <span style="color:var(--text2)">Intervalo</span>
-                <span class="mono">${apiIntervalo}s</span>
+                <span style="color:var(--text2)">WhatsApp</span>
+                <span style="color:${whatsappReady ? 'var(--green)' : 'var(--red)'};font-weight:600">${whatsappReady ? '✅ Conectado' : '❌ Desconectado'}</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 0;">
                 <span style="color:var(--text2)">Total Enviado</span>
@@ -1003,6 +824,13 @@ function renderDashboard() {
     }).catch(e => console.error('Erro ao carregar histórico:', e));
 }
 
+function renderFila() {
+    const tb = $('filaTbody');
+    if (!enviando && $('filaTbody').children.length <= 1) {
+        tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Fila vazia - Inicie um disparo</td></tr>';
+    }
+}
+
 function renderTemplates() {
     const div = $('templatesGrid');
     if (templates.length === 0) {
@@ -1012,8 +840,8 @@ function renderTemplates() {
     div.innerHTML = templates.map((t, i) => `
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-                <div style="font-weight:600">📝 ${t.nome}</div>
-                <button class="btn btn-sm btn-danger" onclick="delTemp(${i})">🗑️</button>
+                <div style="font-weight:600;font-size:14px">📝 ${t.nome}</div>
+                <button class="btn btn-sm btn-danger" onclick="delTemp(${i})">🗑️ Remover</button>
             </div>
             <div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.7;max-height:150px;overflow-y:auto;padding:10px;background:var(--bg5);border-radius:6px">${t.msg}</div>
         </div>
@@ -1049,8 +877,8 @@ function renderClientes() {
                 <td>${dataCad}</td>
                 <td>
                     <div style="display:flex;gap:6px">
-                        <button class="btn btn-sm btn-ghost" onclick="editCli(${idx})">✏️</button>
-                        <button class="btn btn-sm btn-danger" onclick="delCli(${idx})">🗑️</button>
+                        <button class="btn btn-sm btn-ghost" onclick="editCli(${idx})" title="Editar">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="delCli(${idx})" title="Remover">🗑️</button>
                     </div>
                 </td>
             </tr>
@@ -1110,6 +938,117 @@ function updateSel() {
     $('selCount').textContent = count + ' selecionado(s)';
 }
 
+// ==================== DISPARO AUTOMÁTICO ====================
+function iniciarDisparo() {
+    if (!whatsappReady) {
+        toast('WhatsApp não está conectado! Vá em "Conexão WhatsApp" e escaneie o QR Code.', 'err');
+        go('conexao');
+        return;
+    }
+    
+    if (enviando) {
+        toast('Já existe um disparo em andamento! Aguarde terminar.', 'warn');
+        return;
+    }
+    
+    const ti = parseInt($('disparoTemplate').value);
+    if (isNaN(ti) || ti < 0 || ti >= templates.length) {
+        toast('Selecione um template válido!', 'err');
+        return;
+    }
+    
+    const checkboxes = document.querySelectorAll('.dcheck:checked');
+    if (checkboxes.length === 0) {
+        toast('Selecione pelo menos um cliente para enviar!', 'err');
+        return;
+    }
+    
+    const intervalo = parseInt($('disparoIntervalo').value) || 30;
+    const template = templates[ti];
+    const messages = [];
+    
+    checkboxes.forEach(cb => {
+        const idx = parseInt(cb.getAttribute('data-i'));
+        if (idx >= 0 && idx < clientes.length && clientes[idx].tel) {
+            const cliente = clientes[idx];
+            const msg = template.msg
+                .replace(/\{\{nome\}\}/g, cliente.nome)
+                .replace(/\{\{data\}\}/g, new Date().toLocaleDateString('pt-BR'));
+            
+            messages.push({
+                phone: cliente.tel,
+                message: msg,
+                name: cliente.nome
+            });
+        }
+    });
+    
+    if (messages.length === 0) {
+        toast('Nenhum cliente com telefone válido selecionado!', 'err');
+        return;
+    }
+    
+    // Limpar seleção
+    document.querySelectorAll('.dcheck').forEach(c => c.checked = false);
+    updateSel();
+    
+    // Iniciar envio
+    enviando = true;
+    $('btnDisparar').disabled = true;
+    
+    $('filaTbody').innerHTML = messages.map((m, i) => `
+        <tr id="fila-row-${i}">
+            <td>${i + 1}</td>
+            <td><b>${m.name}</b></td>
+            <td class="mono">${m.phone}</td>
+            <td><span class="badge badge-yellow" id="status-${i}">⏳ Aguardando</span></td>
+        </tr>
+    `).join('');
+    
+    $('filaStatus').textContent = `Enviando ${messages.length} mensagens automaticamente...`;
+    $('filaProgresso').style.width = '0%';
+    go('fila');
+    
+    // Enviar via Socket.io
+    socket.emit('send-bulk', { messages, delay: intervalo });
+}
+
+// ==================== SOCKET: PROGRESSO DO ENVIO ====================
+socket.on('bulk-progress', (data) => {
+    const pct = Math.round((data.current / data.total) * 100);
+    $('filaProgresso').style.width = pct + '%';
+    $('filaStatus').textContent = `Enviando ${data.current} de ${data.total}... (${data.name || ''})`;
+    
+    const statusCell = document.getElementById('status-' + (data.current - 1));
+    if (statusCell) {
+        statusCell.innerHTML = '<span class="badge badge-green">✅ Enviado</span>';
+    }
+    
+    enviosHoje++;
+    totalEnviado++;
+    $('dashEnviados').textContent = fmt(enviosHoje);
+    $('dashTotal').textContent = fmt(totalEnviado);
+    
+    // Salvar no Firebase
+    db.ref('historico').push({
+        data: new Date().toISOString(),
+        cliente: data.name || 'Cliente',
+        telefone: data.phone || '',
+        template: 'Template',
+        status: 'enviado'
+    }).catch(e => console.error('Erro ao salvar:', e));
+    
+    db.ref('config/totalEnviado').set(totalEnviado).catch(e => console.error(e));
+});
+
+socket.on('bulk-done', (data) => {
+    $('filaProgresso').style.width = '100%';
+    $('filaStatus').textContent = `✅ Concluído! ${data.sent} enviadas com sucesso!`;
+    enviando = false;
+    $('btnDisparar').disabled = false;
+    toast(`${data.sent} mensagens enviadas automaticamente!`, 'ok');
+});
+
 // ==================== CRUD CLIENTES ====================
 function novoCli() {
     $('editIdx').value = '-1';
@@ -1145,8 +1084,19 @@ async function salvarCli() {
     $('errNome').classList.remove('show');
     $('errTel').classList.remove('show');
     
-    if (!nome) { $('errNome').classList.add('show'); toast('Preencha o nome!', 'err'); return; }
-    if (!tel || tel.length < 10) { $('errTel').classList.add('show'); toast('Telefone inválido!', 'err'); return; }
+    if (!nome) {
+        $('errNome').classList.add('show');
+        $('cliNome').focus();
+        toast('Preencha o nome do cliente!', 'err');
+        return;
+    }
+    
+    if (!tel || tel.length < 10 || tel.length > 13) {
+        $('errTel').classList.add('show');
+        $('cliTel').focus();
+        toast('Telefone inválido! Use: 5511999999999', 'err');
+        return;
+    }
     
     if (!Array.isArray(clientes)) clientes = [];
     
@@ -1158,89 +1108,166 @@ async function salvarCli() {
     
     try {
         await db.ref('clientes').set(clientes);
-        $('cliNome').value = ''; $('cliTel').value = ''; $('cliCid').value = '';
+        
+        $('cliNome').value = '';
+        $('cliTel').value = '';
+        $('cliCid').value = '';
+        $('editIdx').value = '-1';
+        
         fecharModal('modalCliente');
-        renderClientes(); renderDisparo();
-        toast('Cliente salvo!', 'ok');
+        renderClientes();
+        renderDisparo();
+        
+        const msg = idx >= 0 ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!';
+        toast(msg, 'ok');
     } catch (error) {
-        console.error('Erro:', error);
-        toast('Erro ao salvar!', 'err');
+        console.error('Erro ao salvar cliente:', error);
+        toast('Erro ao salvar no banco de dados! Tente novamente.', 'err');
     }
 }
 
 async function delCli(idx) {
-    if (!confirm('Remover cliente?')) return;
+    if (idx < 0 || idx >= clientes.length) return;
+    if (!confirm('Tem certeza que deseja remover o cliente "' + clientes[idx].nome + '"?')) return;
+    
     clientes.splice(idx, 1);
-    await db.ref('clientes').set(clientes);
-    renderClientes(); renderDisparo();
-    toast('Removido!', 'ok');
+    
+    try {
+        await db.ref('clientes').set(clientes);
+        renderClientes();
+        renderDisparo();
+        toast('Cliente removido com sucesso!', 'ok');
+    } catch (error) {
+        console.error('Erro ao remover:', error);
+        toast('Erro ao remover cliente!', 'err');
+    }
 }
 
+// ==================== CRUD TEMPLATES ====================
 async function salvarTemp() {
     const nome = $('tempNome').value.trim();
     const msg = $('tempMsg').value.trim();
-    if (!nome || !msg) { toast('Preencha!', 'err'); return; }
+    
+    if (!nome) {
+        toast('Preencha o nome do template!', 'err');
+        return;
+    }
+    
+    if (!msg) {
+        toast('Preencha a mensagem do template!', 'err');
+        return;
+    }
+    
     templates.push({ nome, msg });
-    await db.ref('templates').set(templates);
-    $('tempNome').value = ''; $('tempMsg').value = '';
-    fecharModal('modalTemplate');
-    renderTemplates(); renderSelects();
-    toast('Template salvo!', 'ok');
+    
+    try {
+        await db.ref('templates').set(templates);
+        $('tempNome').value = '';
+        $('tempMsg').value = '';
+        fecharModal('modalTemplate');
+        renderTemplates();
+        renderSelects();
+        toast('Template salvo com sucesso!', 'ok');
+    } catch (error) {
+        console.error('Erro ao salvar template:', error);
+        toast('Erro ao salvar!', 'err');
+    }
 }
 
 async function delTemp(idx) {
-    if (!confirm('Remover?')) return;
+    if (idx < 0 || idx >= templates.length) return;
+    if (!confirm('Remover template "' + templates[idx].nome + '"?')) return;
+    
     templates.splice(idx, 1);
-    await db.ref('templates').set(templates);
-    renderTemplates(); renderSelects();
+    
+    try {
+        await db.ref('templates').set(templates);
+        renderTemplates();
+        renderSelects();
+        toast('Template removido!', 'ok');
+    } catch (error) {
+        console.error('Erro ao remover:', error);
+    }
 }
 
+// ==================== IMPORTAR CSV ====================
 async function importCSV() {
     const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = '.csv,.txt';
-    inp.onchange = async e => {
-        const f = e.target.files[0]; if (!f) return;
-        const t = await f.text(); let a = 0;
-        t.split('\n').filter(l => l.trim()).forEach(l => {
-            const p = l.split(',');
-            if (p.length >= 2) {
-                const n = p[0].trim(), tel = p[1].trim().replace(/\D/g, '');
-                if (n && tel.length >= 10 && !clientes.some(c => c.tel === tel)) {
-                    clientes.push({ nome: n, tel, cidade: p[2]?.trim() || '', data: new Date().toISOString() });
-                    a++;
+    inp.type = 'file';
+    inp.accept = '.csv,.txt';
+    
+    inp.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const texto = await file.text();
+        let importados = 0;
+        let duplicados = 0;
+        
+        texto.split('\n').filter(l => l.trim()).forEach(l => {
+            const partes = l.split(',');
+            if (partes.length >= 2) {
+                const nome = partes[0].trim();
+                const tel = partes[1].trim().replace(/\D/g, '');
+                
+                if (nome && tel.length >= 10) {
+                    const existe = clientes.some(c => c.tel === tel || c.nome.toLowerCase() === nome.toLowerCase());
+                    if (!existe) {
+                        clientes.push({
+                            nome,
+                            tel,
+                            cidade: partes[2]?.trim() || '',
+                            data: new Date().toISOString()
+                        });
+                        importados++;
+                    } else {
+                        duplicados++;
+                    }
                 }
             }
         });
-        await db.ref('clientes').set(clientes);
-        renderClientes(); renderDisparo();
-        toast(a + ' importados!', 'ok');
+        
+        try {
+            await db.ref('clientes').set(clientes);
+            renderClientes();
+            renderDisparo();
+            let msg = importados + ' clientes importados!';
+            if (duplicados > 0) msg += ' (' + duplicados + ' duplicados ignorados)';
+            toast(msg, 'ok');
+        } catch (error) {
+            console.error('Erro ao importar:', error);
+            toast('Erro ao importar!', 'err');
+        }
     };
+    
     inp.click();
 }
 
-// ==================== CARREGAR DADOS ====================
+// ==================== CARREGAR DADOS DO FIREBASE ====================
 async function carregarDados() {
+    console.log('🔄 Carregando dados do Firebase...');
+    
     try {
-        const [snapTemplates, snapClientes, snapConfig, snapHistorico, snapTotal] = await Promise.all([
+        const [snapTemplates, snapClientes, snapHistorico, snapTotal] = await Promise.all([
             db.ref('templates').get(),
             db.ref('clientes').get(),
-            db.ref('config/api').get(),
             db.ref('historico').get(),
             db.ref('config/totalEnviado').get()
         ]);
         
-        if (snapTemplates.exists()) templates = toArray(snapTemplates.val());
-        if (snapClientes.exists()) clientes = toArray(snapClientes.val());
-        
-        if (snapConfig.exists()) {
-            const cfg = snapConfig.val();
-            serverUrl = cfg.serverUrl || '';
-            apiKey = cfg.apiKey || '';
-            apiPhone = cfg.apiPhone || '';
-            apiIntervalo = cfg.apiIntervalo || 30;
+        if (snapTemplates.exists()) {
+            templates = toArray(snapTemplates.val());
+            console.log('📝 Templates carregados:', templates.length);
         }
         
-        if (snapTotal.exists()) totalEnviado = snapTotal.val() || 0;
+        if (snapClientes.exists()) {
+            clientes = toArray(snapClientes.val());
+            console.log('👥 Clientes carregados:', clientes.length);
+        }
+        
+        if (snapTotal.exists()) {
+            totalEnviado = snapTotal.val() || 0;
+        }
         
         if (snapHistorico.exists()) {
             const historico = toArray(snapHistorico.val());
@@ -1250,45 +1277,63 @@ async function carregarDados() {
             ).length;
         }
         
-        atualizarStatusAPI();
         renderTemplates();
         renderClientes();
         renderSelects();
         renderDashboard();
         
+        console.log('✅ Dados carregados com sucesso!');
+        
     } catch (error) {
-        console.error('Erro ao carregar:', error);
+        console.error('❌ Erro ao carregar dados:', error);
+        toast('Erro ao carregar dados do Firebase! Verifique sua conexão.', 'err');
     }
 }
 
 // ==================== EVENTOS ====================
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 ADEMICON - Sistema iniciado!');
+    
+    // Navegação
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function() {
             go(this.getAttribute('data-page'));
         });
     });
     
-    $('btnSalvarApi').addEventListener('click', salvarConfigAPI);
+    // Disparo
     $('btnDisparar').addEventListener('click', iniciarDisparo);
     $('selAll').addEventListener('change', function() {
         document.querySelectorAll('.dcheck').forEach(c => c.checked = this.checked);
         updateSel();
     });
     $('searchDisparo').addEventListener('input', renderDisparo);
+    
+    // Templates
     $('btnAddTemplate').addEventListener('click', () => abrirModal('modalTemplate'));
     $('btnSalvarTemp').addEventListener('click', salvarTemp);
+    
+    // Clientes
     $('btnAddCliente').addEventListener('click', novoCli);
     $('btnSalvarCli').addEventListener('click', salvarCli);
     $('btnImportCSV').addEventListener('click', importCSV);
     $('searchClientes').addEventListener('input', renderClientes);
     
+    // Fechar modais clicando fora
     document.querySelectorAll('.modal-overlay').forEach(m => {
         m.addEventListener('click', function(e) {
             if (e.target === m) m.classList.remove('open');
         });
     });
     
+    // Fechar modais com ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+        }
+    });
+    
+    // Carregar dados
     carregarDados();
 });
 </script>
