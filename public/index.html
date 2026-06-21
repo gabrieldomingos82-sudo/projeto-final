@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADEMICON - Disparo WhatsApp Automático</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg: #0a0d14;
+            --bg2: #111827;
+            --bg3: #131b2e;
+            --bg4: #1a2540;
+            --bg5: #0f1729;
+            --border: #1e2d45;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #4b5e7a;
+            --blue: #3b82f6;
+            --blue-dark: #2563eb;
+            --green: #10b981;
+            --green-dark: #059669;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --red-dark: #dc2626;
+            --wp: #25D366;
+            --wp-dark: #20bd5a;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+            --trans: 0.2s ease;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 260px;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top:0; left:0; bottom:0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar-logo {
+            padding: 20px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(180deg, rgba(37,211,102,0.08) 0%, transparent 100%);
+        }
+
+        .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border-radius: var(--radius);
+            display: flex; align-items:center; justify-content:center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(37,211,102,0.3);
+        }
+
+        .logo-text { font-weight:700; font-size:15px; }
+        .logo-sub { font-size:10px; color:var(--wp); font-weight:500; }
+
+        .sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; }
+
+        .nav-section {
+            padding:14px 14px 6px;
+            font-size:9px; font-weight:700;
+            letter-spacing:0.12em; text-transform:uppercase;
+            color:var(--text3);
+        }
+
+        .nav-item {
+            display:flex; align-items:center; gap:10px;
+            padding:10px 16px; cursor:pointer;
+            font-size:13px; color:var(--text2);
+            border-left:3px solid transparent;
+            transition: all var(--trans);
+            margin:1px 0;
+        }
+
+        .nav-item:hover { background:var(--bg4); color:var(--text); }
+        .nav-item.active {
+            background: rgba(37,211,102,0.1);
+            color: var(--wp);
+            border-left-color: var(--wp);
+            font-weight:500;
+        }
+
+        .nav-badge {
+            background: var(--red); color:#fff;
+            font-size:10px; padding:2px 7px;
+            border-radius:10px; margin-left:auto;
+            font-weight:600;
+        }
+
+        .sidebar-footer {
+            padding:14px 16px; border-top:1px solid var(--border);
+            display:flex; align-items:center; gap:10px;
+            background: var(--bg3);
+        }
+
+        .user-avatar {
+            width:34px; height:34px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            font-size:14px; font-weight:700; color:#fff;
+        }
+
+        .user-name { font-size:12px; font-weight:600; }
+        .user-role { font-size:10px; color:var(--text3); margin-top:1px; }
+
+        /* ========== MAIN ========== */
+        .main { margin-left:260px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+        .topbar {
+            background: var(--bg2); border-bottom:1px solid var(--border);
+            padding:14px 24px; display:flex; align-items:center;
+            justify-content:space-between; position:sticky;
+            top:0; z-index:50; min-height:64px;
+            flex-wrap:wrap; gap:12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .topbar-title { font-size:16px; font-weight:600; }
+        .topbar-sub { font-size:11px; color:var(--text3); }
+        .topbar-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+        .status-badge {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:6px 14px; border-radius:20px;
+            font-size:11px; font-weight:600;
+            border:1px solid transparent;
+        }
+        .status-badge.online { background:rgba(16,185,129,0.1); color:var(--green); border-color:rgba(16,185,129,0.3); }
+        .status-badge.offline { background:rgba(239,68,68,0.1); color:var(--red); border-color:rgba(239,68,68,0.3); }
+        .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+        .status-dot.online { background:var(--green); animation:pulse 2s infinite; }
+        .status-dot.offline { background:var(--red); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        .topbar-clock {
+            font-size:12px; color:var(--text3);
+            font-family:'JetBrains Mono',monospace;
+            padding:6px 12px;
+            background:var(--bg3);
+            border-radius:var(--radius);
+            border:1px solid var(--border);
+        }
+
+        .content { padding:24px; flex:1; }
+        .screen { display:none; animation: fadeIn 0.3s ease; }
+        .screen.active { display:block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ========== BOTÕES ========== */
+        .btn {
+            display:inline-flex; align-items:center; justify-content:center;
+            gap:6px; padding:8px 16px; border-radius:var(--radius);
+            font-size:12.5px; font-weight:500; cursor:pointer; border:none;
+            transition:all var(--trans); font-family:inherit; white-space:nowrap;
+        }
+
+        .btn:hover:not(:disabled) { opacity:0.9; transform: translateY(-1px); }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary { background:var(--blue); color:#fff; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+        .btn-primary:hover { background:var(--blue-dark); }
+        .btn-success { background:var(--green); color:#fff; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+        .btn-success:hover { background:var(--green-dark); }
+        .btn-danger { background:var(--red); color:#fff; }
+        .btn-danger:hover { background:var(--red-dark); }
+        .btn-wp { background:var(--wp); color:#fff; font-weight:600; box-shadow: 0 2px 8px rgba(37,211,102,0.3); }
+        .btn-wp:hover { background:var(--wp-dark); }
+        .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+        .btn-ghost:hover { background:var(--bg4); color:var(--text); border-color:var(--text3); }
+
+        .btn-lg { padding:12px 24px; font-size:14px; font-weight:600; }
+        .btn-sm { padding:5px 10px; font-size:11px; }
+        .btn-block { width:100%; }
+
+        /* ========== CARDS ========== */
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+
+        .stat-card {
+            background:var(--bg2); border:1px solid var(--border);
+            border-radius:var(--radius-lg); padding:20px;
+            position:relative; overflow:hidden;
+            transition: all 0.25s;
+        }
+
+        .stat-card:hover { border-color:var(--wp); transform:translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+        .stat-card.green::before { background:var(--green); }
+        .stat-card.blue::before { background:var(--blue); }
+        .stat-card.yellow::before { background:var(--yellow); }
+        .stat-card.red::before { background:var(--red); }
+
+        .stat-label { font-size:11px; color:var(--text2); font-weight:500; text-transform:uppercase; letter-spacing:0.3px; display:flex; align-items:center; gap:6px; }
+        .stat-value { font-size:30px; font-weight:700; margin-top:8px; line-height:1; font-family:'JetBrains Mono',monospace; }
+        .stat-delta { font-size:11px; margin-top:8px; color:var(--text3); }
+
+        /* ========== PAINÉIS ========== */
+        .panel { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:20px; }
+        .panel-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:var(--bg3); }
+        .panel-title { font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; color: var(--text); }
+        .panel-body { padding:20px; }
+
+        /* ========== TABELAS ========== */
+        .table-wrap { overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); }
+        table { width:100%; border-collapse:collapse; }
+        thead th { text-align:left; padding:10px 14px; font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--text3); border-bottom:2px solid var(--border); background:var(--bg3); white-space:nowrap; }
+        tbody td { padding:12px 14px; font-size:13px; border-bottom:1px solid rgba(30,45,69,0.4); color: var(--text); }
+        tbody tr:last-child td { border-bottom:none; }
+        tbody tr:hover td { background:rgba(255,255,255,0.02); }
+        .mono { font-family:'JetBrains Mono',monospace; font-size:12px; }
+
+        /* ========== BADGES ========== */
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:10px; font-weight:600; letter-spacing:0.2px; }
+        .badge-green { background:rgba(16,185,129,0.15); color:var(--green); border:1px solid rgba(16,185,129,0.3); }
+        .badge-red { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+        .badge-yellow { background:rgba(245,158,11,0.15); color:var(--yellow); border:1px solid rgba(245,158,11,0.3); }
+        .badge-blue { background:rgba(59,130,246,0.15); color:var(--blue); border:1px solid rgba(59,130,246,0.3); }
+
+        /* ========== GRID ========== */
+        .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+        /* ========== BUSCA ========== */
+        .search-bar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        .search-input { flex:1; min-width:200px; background:var(--bg5); border:1px solid var(--border); border-radius:var(--radius); padding:9px 14px; color:var(--text); font-size:13px; font-family:inherit; outline:none; transition: border-color 0.2s; }
+        .search-input:focus { border-color:var(--wp); box-shadow: 0 0 0 3px rgba(37,211,102,0.1); }
+        .search-input::placeholder { color:var(--text3); }
+
+        /* ========== ALERTAS ========== */
+        .alert { border-radius:var(--radius); padding:14px 16px; font-size:13px; display:flex; align-items:flex-start; gap:10px; margin-bottom:16px; line-height:1.6; }
+        .alert-blue { background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.25); color:#93c5fd; }
+        .alert-green { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); color:#6ee7b7; }
+        .alert-yellow { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); color:#fcd34d; }
+        .alert-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+
+        .empty-state { text-align:center; padding:40px 20px; color:var(--text3); font-size:13px; }
+        .empty-state-icon { font-size:48px; margin-bottom:12px; display:block; opacity:0.4; }
+
+        /* ========== MODAL ========== */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+        .modal-overlay.open { display:flex; }
+        .modal { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-xl); width:650px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow: 0 16px 48px rgba(0,0,0,0.5); animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(-20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .modal-header { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--bg3); position:sticky; top:0; z-index:1; border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+        .modal-title { font-size:15px; font-weight:600; color: var(--text); }
+        .modal-close { cursor:pointer; color:var(--text3); font-size:22px; background:none; border:none; padding:4px 8px; border-radius:4px; transition: all 0.2s; }
+        .modal-close:hover { color:var(--text); background:var(--bg4); }
+        .modal-body { padding:24px; }
+        .modal-footer { padding:14px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; background:var(--bg3); border-radius: 0 0 var(--radius-xl) var(--radius-xl); position:sticky; bottom:0; z-index:1; }
+
+        /* ========== FORMULÁRIOS ========== */
+        .form-group { margin-bottom:18px; }
+        .form-label { display:block; font-size:11px; font-weight:600; color:var(--text2); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.3px; }
+        .form-label-required::after { content:' *'; color:var(--red); }
+        .form-input, .form-select, .form-textarea { width:100%; background:var(--bg5); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; color:var(--text); font-size:13px; font-family:inherit; outline:none; transition: all 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--wp); box-shadow: 0 0 0 3px rgba(37,211,102,0.1); background: #0a0f1a; }
+        .form-select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234b5e7a' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
+        .form-select option { background:var(--bg2); color:var(--text); }
+        .form-textarea { min-height:100px; resize:vertical; line-height:1.7; }
+        .form-hint { font-size:11px; color:var(--text3); margin-top:5px; }
+        .form-error { color:var(--red); font-size:11px; margin-top:5px; display:none; font-weight:500; }
+        .form-error.show { display:block; }
+
+        /* ========== PROGRESSO ========== */
+        .progress-bar { width:100%; height:10px; background:var(--border); border-radius:5px; overflow:hidden; margin:12px 0; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--wp)); border-radius:5px; transition:width 0.5s ease; width:0%; }
+
+        /* ========== TOAST ========== */
+        .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column-reverse; gap:8px; }
+        .toast { padding:14px 20px; border-radius:10px; font-size:13px; font-weight:500; background:var(--bg2); border:1px solid var(--wp); color:var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation:slideIn 0.35s ease; max-width:420px; }
+        .toast.toast-success { border-color:var(--green); }
+        .toast.toast-error { border-color:var(--red); }
+        .toast.toast-warning { border-color:var(--yellow); }
+        @keyframes slideIn { from{opacity:0;transform:translateX(100px)} to{opacity:1;transform:translateX(0)} }
+
+        /* ========== RESPONSIVO ========== */
+        @media (max-width:1200px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
+        @media (max-width:768px) { .grid-2 { grid-template-columns:1fr; } .stats-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+
+<!-- ==================== SIDEBAR ==================== -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">💬</div>
+        <div>
+            <div class="logo-text">ADEMICON</div>
+            <div class="logo-sub">Pré-Venda Inteligente</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Principal</div>
+        <div class="nav-item active" data-page="dashboard">
+            <span>📊</span> Dashboard
+        </div>
+        <div class="nav-item" data-page="config-api">
+            <span>🔑</span> Configurar API
+            <span class="nav-badge" id="navApiStatus" style="background:var(--yellow)">?</span>
+        </div>
+        <div class="nav-section">Disparos</div>
+        <div class="nav-item" data-page="disparo">
+            <span>📩</span> Central de Disparo
+        </div>
+        <div class="nav-item" data-page="fila">
+            <span>⏳</span> Fila de Envio
+            <span class="nav-badge" id="navFila" style="background:var(--blue)">0</span>
+        </div>
+        <div class="nav-section">Gerenciamento</div>
+        <div class="nav-item" data-page="templates">
+            <span>📝</span> Templates
+        </div>
+        <div class="nav-item" data-page="clientes">
+            <span>👥</span> Base de Clientes
+        </div>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-avatar">AP</div>
+        <div class="user-info">
+            <div class="user-name">Ana Paula</div>
+            <div class="user-role">Administradora</div>
+        </div>
+    </div>
+</aside>
+
+<!-- ==================== MAIN ==================== -->
+<main class="main">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title" id="topbar-title">Dashboard</div>
+            <div class="topbar-sub" id="topbar-sub">Sistema de Disparo WhatsApp - CallMeBot API</div>
+        </div>
+        <div class="topbar-actions">
+            <span class="status-badge offline" id="apiStatusBadge">
+                <span class="status-dot offline"></span>
+                <span id="apiStatusText">API não configurada</span>
+            </span>
+            <span class="topbar-clock" id="clock">00:00:00</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- ==================== DASHBOARD ==================== -->
+        <div class="screen active" id="screen-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card green">
+                    <div class="stat-label">✅ Enviados Hoje</div>
+                    <div class="stat-value" id="dashEnviados">0</div>
+                    <div class="stat-delta">Mensagens enviadas via API</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-label">📝 Templates</div>
+                    <div class="stat-value" id="dashTemplates">0</div>
+                    <div class="stat-delta">Templates cadastrados</div>
+                </div>
+                <div class="stat-card yellow">
+                    <div class="stat-label">👥 Clientes</div>
+                    <div class="stat-value" id="dashClientes">0</div>
+                    <div class="stat-delta">Clientes na base</div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-label">📤 Total Enviado</div>
+                    <div class="stat-value" id="dashTotal">0</div>
+                    <div class="stat-delta">Histórico total</div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-header"><div class="panel-title">📊 Últimos Envios</div></div>
+                    <div class="panel-body">
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Data</th><th>Cliente</th><th>Telefone</th><th>Status</th></tr></thead>
+                                <tbody id="dashUltimos">
+                                    <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)"><div class="empty-state-icon">📭</div>Nenhum envio ainda</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header"><div class="panel-title">📋 Resumo do Sistema</div></div>
+                    <div class="panel-body" id="dashResumo">
+                        <div class="empty-state"><div class="empty-state-icon">📱</div>Carregando...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CONFIG API ==================== -->
+        <div class="screen" id="screen-config-api">
+            <div class="alert alert-yellow">
+                <span class="alert-icon">⚙️</span>
+                <span>
+                    <b>Configuração da API CallMeBot</b><br><br>
+                    <b>Passo 1:</b> Adicione o número <b>+34 644 51 95 23</b> no seu WhatsApp<br>
+                    <b>Passo 2:</b> Envie a mensagem: <b>I allow callmebot to send me messages</b><br>
+                    <b>Passo 3:</b> Você receberá uma <b>API Key</b><br>
+                    <b>Passo 4:</b> Cole a API Key abaixo<br>
+                    <b>Passo 5:</b> Cole a URL do seu servidor Render
+                </span>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title">🔑 Configuração</div></div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label class="form-label form-label-required">URL do Servidor Render</label>
+                        <input class="form-input" id="cfgServerUrl" placeholder="https://seu-app.onrender.com">
+                        <div class="form-hint">Ex: https://ademicon.onrender.com</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Sua API Key do CallMeBot</label>
+                        <input class="form-input" id="cfgApiKey" placeholder="Cole aqui a API Key recebida...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Seu Número WhatsApp (com DDD)</label>
+                        <input class="form-input" id="cfgPhone" placeholder="5511999999999">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Intervalo entre envios (segundos)</label>
+                        <input class="form-input" id="cfgIntervalo" type="number" value="30" min="10" max="300">
+                        <div class="form-hint">Recomendado: 30 segundos para evitar bloqueio</div>
+                    </div>
+                    <button class="btn btn-success btn-block btn-lg" id="btnSalvarApi">💾 Salvar Configurações</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== DISPARO ==================== -->
+        <div class="screen" id="screen-disparo">
+            <div class="alert alert-blue">
+                <span class="alert-icon">📩</span>
+                <span><b>Central de Disparo</b> - Envio 100% AUTOMÁTICO via servidor</span>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title">⚙️ Configurar Disparo</div></div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Template da Mensagem</label>
+                        <select class="form-select" id="disparoTemplate"><option value="">Selecione um template...</option></select>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+                        <button class="btn btn-ghost" onclick="selTodos()">✅ Selecionar Todos</button>
+                        <button class="btn btn-ghost" onclick="limparSel()">❌ Limpar Seleção</button>
+                    </div>
+                    <button class="btn btn-wp btn-block btn-lg" id="btnDisparar">
+                        🚀 INICIAR DISPARO AUTOMÁTICO
+                    </button>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">👥 Clientes para Disparo</div>
+                    <span class="badge badge-blue" id="selCount">0 selecionados</span>
+                </div>
+                <div class="panel-body">
+                    <div class="search-bar">
+                        <input class="search-input" placeholder="🔍 Buscar cliente por nome..." id="searchDisparo">
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th style="width:50px"><input type="checkbox" id="selAll" title="Selecionar todos"></th><th>Nome</th><th>Telefone</th><th>Cidade</th></tr></thead>
+                            <tbody id="disparoTbody">
+                                <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)"><div class="empty-state-icon">👥</div>Nenhum cliente cadastrado</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== FILA ==================== -->
+        <div class="screen" id="screen-fila">
+            <div class="alert alert-green">
+                <span class="alert-icon">⏳</span>
+                <span><b>Fila de Envio Automático</b> - Mensagens sendo enviadas pelo servidor</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="filaProgresso"></div></div>
+            <div style="text-align:center;color:var(--text2);margin:8px 0;font-size:14px;font-weight:600" id="filaStatus">Aguardando início...</div>
+            <div class="panel">
+                <div class="panel-header"><div class="panel-title">📤 Log de Envios</div></div>
+                <div class="panel-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>#</th><th>Cliente</th><th>Telefone</th><th>Status</th></tr></thead>
+                            <tbody id="filaTbody">
+                                <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Fila vazia</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TEMPLATES ==================== -->
+        <div class="screen" id="screen-templates">
+            <div class="search-bar">
+                <button class="btn btn-primary" id="btnAddTemplate">＋ Novo Template</button>
+            </div>
+            <div class="grid-2" id="templatesGrid">
+                <div class="empty-state" style="grid-column:1/-1">
+                    <div class="empty-state-icon">📝</div>
+                    Nenhum template criado ainda
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CLIENTES ==================== -->
+        <div class="screen" id="screen-clientes">
+            <div class="search-bar">
+                <input class="search-input" placeholder="🔍 Buscar cliente..." id="searchClientes">
+                <button class="btn btn-primary" id="btnAddCliente">＋ Novo Cliente</button>
+                <button class="btn btn-ghost" id="btnImportCSV">📥 Importar CSV</button>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">👥 Base de Clientes</div>
+                    <span class="badge badge-blue" id="totalClientesBadge">0 clientes</span>
+                </div>
+                <div class="panel-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Nome</th><th>Telefone</th><th>Cidade</th><th>Data Cadastro</th><th>Ações</th></tr></thead>
+                            <tbody id="clientesTbody">
+                                <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Nenhum cliente</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ==================== MODAIS ==================== -->
+<div class="modal-overlay" id="modalCliente">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="modalClienteTitulo">👤 Novo Cliente</div>
+            <button class="modal-close" onclick="fecharModal('modalCliente')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editIdx" value="-1">
+            <div class="form-group">
+                <label class="form-label form-label-required">Nome Completo</label>
+                <input class="form-input" id="cliNome" placeholder="Nome completo do cliente" autocomplete="off">
+                <div class="form-error" id="errNome">O nome é obrigatório</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label form-label-required">Telefone WhatsApp (com DDD)</label>
+                <input class="form-input" id="cliTel" placeholder="5511999999999" autocomplete="off">
+                <div class="form-hint">Digite apenas números, sem espaços ou traços</div>
+                <div class="form-error" id="errTel">Telefone inválido (mínimo 10 dígitos)</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cidade/Estado</label>
+                <input class="form-input" id="cliCid" placeholder="Ex: São Paulo/SP" autocomplete="off">
+                <div class="form-hint">Opcional - para segmentação</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="fecharModal('modalCliente')">Cancelar</button>
+            <button class="btn btn-success" id="btnSalvarCli">💾 Salvar Cliente</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalTemplate">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">📝 Template de Mensagem</div>
+            <button class="modal-close" onclick="fecharModal('modalTemplate')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label form-label-required">Nome do Template</label>
+                <input class="form-input" id="tempNome" placeholder="Ex: Apresentação Consórcio" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label form-label-required">Mensagem</label>
+                <textarea class="form-textarea" id="tempMsg" style="min-height:150px" placeholder="Digite a mensagem... Use {{nome}} para o nome do cliente">Olá {{nome}}! 😊
+
+Sou a Ana, da ADEMICON Consórcios.
+
+Estamos com condições especiais este mês:
+✅ Lance reduzido
+✅ Sem taxa de adesão
+✅ Até 200 meses para pagar
+
+Teria interesse em saber mais?
+
+Aguardo seu retorno! 💙</textarea>
+                <div class="form-hint">
+                    <b>Variáveis disponíveis:</b><br>
+                    <code>{{nome}}</code> - Nome do cliente<br>
+                    <code>{{data}}</code> - Data atual
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="fecharModal('modalTemplate')">Cancelar</button>
+            <button class="btn btn-primary" id="btnSalvarTemp">💾 Salvar Template</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ==================== FIREBASE INIT ====================
+const firebaseConfig = {
+    apiKey: "AIzaSyDNrif_LmcK_LF-oZIzZYjWWH77dRMNygc",
+    authDomain: "admicon-ana.firebaseapp.com",
+    databaseURL: "https://admicon-ana-default-rtdb.firebaseio.com",
+    projectId: "admicon-ana",
+    storageBucket: "admicon-ana.firebasestorage.app",
+    messagingSenderId: "126568377239",
+    appId: "1:126568377239:web:91165cb9d9ed45880b72d2"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ==================== VARIÁVEIS GLOBAIS ====================
+let serverUrl = '';
+let apiKey = '';
+let apiPhone = '';
+let apiIntervalo = 30;
+let templates = [];
+let clientes = [];
+let enviando = false;
+let enviosHoje = 0;
+let totalEnviado = 0;
+
+// ==================== UTILITÁRIOS ====================
+const $ = (id) => document.getElementById(id);
+const fmt = (v) => (Number(v) || 0).toLocaleString('pt-BR');
+
+function toast(msg, tipo) {
+    const container = $('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    if (tipo === 'ok') t.classList.add('toast-success');
+    if (tipo === 'err') t.classList.add('toast-error');
+    if (tipo === 'warn') t.classList.add('toast-warning');
+    const icons = { ok: '✅ ', err: '❌ ', warn: '⚠️ ', info: 'ℹ️ ' };
+    t.textContent = (icons[tipo] || '') + msg;
+    container.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3500);
+    if (container.children.length > 5) container.firstChild.remove();
+}
+
+function abrirModal(id) { $(id).classList.add('open'); }
+function fecharModal(id) { $(id).classList.remove('open'); }
+
+function updateClock() {
+    const e = $('clock');
+    if (e) e.textContent = new Date().toLocaleTimeString('pt-BR');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function toArray(obj) {
+    if (!obj) return [];
+    if (Array.isArray(obj)) return obj;
+    return Object.values(obj);
+}
+
+function atualizarStatusAPI() {
+    const badge = $('apiStatusBadge');
+    const text = $('apiStatusText');
+    const dot = badge.querySelector('.status-dot');
+    const nav = $('navApiStatus');
+    
+    if (serverUrl && apiKey && apiPhone) {
+        badge.className = 'status-badge online';
+        dot.className = 'status-dot online';
+        text.textContent = 'API Configurada ✓';
+        nav.style.background = 'var(--green)';
+        nav.textContent = 'ON';
+    } else {
+        badge.className = 'status-badge offline';
+        dot.className = 'status-dot offline';
+        text.textContent = 'API não configurada';
+        nav.style.background = 'var(--yellow)';
+        nav.textContent = '?';
+    }
+}
+
+// ==================== NAVEGAÇÃO ====================
+function go(page) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    const sc = $('screen-' + page);
+    if (sc) sc.classList.add('active');
+    
+    const nav = document.querySelector(`.nav-item[data-page="${page}"]`);
+    if (nav) nav.classList.add('active');
+    
+    const titles = {
+        'dashboard': 'Dashboard',
+        'config-api': 'Configurar API',
+        'disparo': 'Central de Disparo',
+        'fila': 'Fila de Envio',
+        'templates': 'Templates',
+        'clientes': 'Base de Clientes'
+    };
+    
+    $('topbar-title').textContent = titles[page] || 'ADEMICON';
+    $('topbar-sub').textContent = 'Sistema de Disparo WhatsApp - CallMeBot API';
+    
+    if (page === 'disparo') { renderSelects(); renderDisparo(); }
+    if (page === 'templates') renderTemplates();
+    if (page === 'clientes') renderClientes();
+    if (page === 'config-api') carregarConfigTela();
+    if (page === 'dashboard') renderDashboard();
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function() {
+        const page = this.getAttribute('data-page');
+        if (page) go(page);
+    });
+});
+
+// ==================== CONFIG API ====================
+function carregarConfigTela() {
+    $('cfgServerUrl').value = serverUrl;
+    $('cfgApiKey').value = apiKey;
+    $('cfgPhone').value = apiPhone;
+    $('cfgIntervalo').value = apiIntervalo;
+}
+
+async function salvarConfigAPI() {
+    serverUrl = $('cfgServerUrl').value.trim().replace(/\/$/, '');
+    apiKey = $('cfgApiKey').value.trim();
+    apiPhone = $('cfgPhone').value.trim();
+    apiIntervalo = parseInt($('cfgIntervalo').value) || 30;
+    
+    if (!serverUrl) { toast('Preencha a URL do servidor!', 'err'); return; }
+    if (!apiKey) { toast('Preencha a API Key!', 'err'); return; }
+    if (!apiPhone) { toast('Preencha seu número!', 'err'); return; }
+    
+    // Testar conexão com o servidor
+    try {
+        const testUrl = `${serverUrl}/api/send-whatsapp?phone=${apiPhone}&text=Teste&apikey=${apiKey}`;
+        const response = await fetch(testUrl);
+        const data = await response.json();
+        
+        if (data.success || data.message?.includes('QUEUED')) {
+            await db.ref('config/api').set({ serverUrl, apiKey, apiPhone, apiIntervalo });
+            atualizarStatusAPI();
+            toast('Configurações salvas e testadas com sucesso!', 'ok');
+        } else {
+            toast('Servidor respondeu, mas a API Key pode estar errada. Verifique!', 'warn');
+            await db.ref('config/api').set({ serverUrl, apiKey, apiPhone, apiIntervalo });
+            atualizarStatusAPI();
+        }
+    } catch (error) {
+        console.error('Erro ao testar:', error);
+        toast('Erro ao conectar com o servidor! Verifique a URL.', 'err');
+    }
+}
+
+// ==================== ENVIO VIA SERVIDOR PROXY ====================
+async function enviarMensagemAPI(telefone, mensagem) {
+    if (!serverUrl || !apiKey || !apiPhone) {
+        throw new Error('API não configurada');
+    }
+    
+    const url = `${serverUrl}/api/send-whatsapp?phone=${telefone}&text=${encodeURIComponent(mensagem)}&apikey=${apiKey}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success || data.message?.includes('QUEUED')) {
+        return true;
+    } else {
+        throw new Error(data.error || data.message || 'Erro desconhecido');
+    }
+}
+
+// ==================== DISPARO AUTOMÁTICO ====================
+async function iniciarDisparo() {
+    if (!serverUrl || !apiKey || !apiPhone) {
+        toast('Configure a API primeiro! Vá em "Configurar API".', 'err');
+        go('config-api');
+        return;
+    }
+    
+    if (enviando) {
+        toast('Já existe um disparo em andamento! Aguarde terminar.', 'warn');
+        return;
+    }
+    
+    const ti = parseInt($('disparoTemplate').value);
+    if (isNaN(ti) || ti < 0 || ti >= templates.length) {
+        toast('Selecione um template válido!', 'err');
+        return;
+    }
+    
+    const checkboxes = document.querySelectorAll('.dcheck:checked');
+    if (checkboxes.length === 0) {
+        toast('Selecione pelo menos um cliente!', 'err');
+        return;
+    }
+    
+    const template = templates[ti];
+    const mensagens = [];
+    
+    checkboxes.forEach(cb => {
+        const idx = parseInt(cb.getAttribute('data-i'));
+        if (idx >= 0 && idx < clientes.length && clientes[idx].tel) {
+            const cliente = clientes[idx];
+            const msg = template.msg
+                .replace(/\{\{nome\}\}/g, cliente.nome)
+                .replace(/\{\{data\}\}/g, new Date().toLocaleDateString('pt-BR'));
+            
+            mensagens.push({
+                nome: cliente.nome,
+                telefone: cliente.tel,
+                mensagem: msg,
+                template: template.nome
+            });
+        }
+    });
+    
+    if (mensagens.length === 0) {
+        toast('Nenhum cliente com telefone válido!', 'err');
+        return;
+    }
+    
+    // Limpar seleção
+    document.querySelectorAll('.dcheck').forEach(c => c.checked = false);
+    updateSel();
+    
+    // Iniciar envio
+    enviando = true;
+    $('btnDisparar').disabled = true;
+    
+    $('filaTbody').innerHTML = mensagens.map((m, i) => `
+        <tr id="fila-row-${i}">
+            <td>${i + 1}</td>
+            <td><b>${m.nome}</b></td>
+            <td class="mono">${m.telefone}</td>
+            <td><span class="badge badge-yellow" id="status-${i}">⏳ Aguardando</span></td>
+        </tr>
+    `).join('');
+    
+    $('filaStatus').textContent = `Iniciando envio de ${mensagens.length} mensagens...`;
+    $('filaProgresso').style.width = '0%';
+    go('fila');
+    
+    let sucessos = 0;
+    let falhas = 0;
+    
+    for (let i = 0; i < mensagens.length; i++) {
+        const m = mensagens[i];
+        
+        const pct = Math.round(((i + 1) / mensagens.length) * 100);
+        $('filaProgresso').style.width = pct + '%';
+        $('filaStatus').textContent = `Enviando ${i + 1} de ${mensagens.length}... (${m.nome})`;
+        
+        const statusCell = document.getElementById('status-' + i);
+        if (statusCell) {
+            statusCell.innerHTML = '<span class="badge badge-yellow">📤 Enviando...</span>';
+        }
+        
+        try {
+            const resultado = await enviarMensagemAPI(m.telefone, m.mensagem);
+            
+            if (resultado) {
+                sucessos++;
+                enviosHoje++;
+                totalEnviado++;
+                
+                if (statusCell) {
+                    statusCell.innerHTML = '<span class="badge badge-green">✅ Enviado</span>';
+                }
+                
+                db.ref('historico').push({
+                    data: new Date().toISOString(),
+                    cliente: m.nome,
+                    telefone: m.telefone,
+                    template: m.template,
+                    status: 'enviado'
+                }).catch(e => console.error('Erro ao salvar histórico:', e));
+                
+            } else {
+                throw new Error('Falha no envio');
+            }
+        } catch (error) {
+            falhas++;
+            console.error(`Erro ao enviar para ${m.nome}:`, error.message);
+            
+            if (statusCell) {
+                statusCell.innerHTML = '<span class="badge badge-red">❌ Falha</span>';
+            }
+        }
+        
+        if (i < mensagens.length - 1) {
+            $('filaStatus').textContent = `Aguardando ${apiIntervalo}s para próximo envio...`;
+            await new Promise(r => setTimeout(r, apiIntervalo * 1000));
+        }
+    }
+    
+    $('filaProgresso').style.width = '100%';
+    $('filaStatus').textContent = `✅ Concluído! ${sucessos} enviadas, ${falhas} falhas`;
+    $('dashEnviados').textContent = fmt(enviosHoje);
+    $('dashTotal').textContent = fmt(totalEnviado);
+    
+    db.ref('config/totalEnviado').set(totalEnviado).catch(e => console.error(e));
+    
+    enviando = false;
+    $('btnDisparar').disabled = false;
+    
+    toast(`${sucessos} mensagens enviadas com sucesso!` + (falhas > 0 ? ` (${falhas} falhas)` : ''), 
+        sucessos > 0 ? 'ok' : 'err');
+    
+    renderDashboard();
+}
+
+// ==================== RENDERIZAÇÕES ====================
+function renderDashboard() {
+    $('dashEnviados').textContent = fmt(enviosHoje);
+    $('dashTemplates').textContent = templates.length;
+    $('dashClientes').textContent = clientes.length;
+    $('dashTotal').textContent = fmt(totalEnviado);
+    
+    $('dashResumo').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                <span style="color:var(--text2)">Templates</span>
+                <span class="mono">${templates.length}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                <span style="color:var(--text2)">Clientes</span>
+                <span class="mono">${clientes.length}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                <span style="color:var(--text2)">API Configurada</span>
+                <span style="color:${serverUrl && apiKey ? 'var(--green)' : 'var(--red)'};font-weight:600">${serverUrl && apiKey ? '✅ Sim' : '❌ Não'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+                <span style="color:var(--text2)">Intervalo</span>
+                <span class="mono">${apiIntervalo}s</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;">
+                <span style="color:var(--text2)">Total Enviado</span>
+                <span class="mono" style="color:var(--green);font-weight:600">${fmt(totalEnviado)}</span>
+            </div>
+        </div>
+    `;
+    
+    db.ref('historico').get().then(snap => {
+        if (snap.exists()) {
+            const historico = toArray(snap.val());
+            const ultimos = historico.slice(-10).reverse();
+            $('dashUltimos').innerHTML = ultimos.map(h => `
+                <tr>
+                    <td>${new Date(h.data).toLocaleString('pt-BR')}</td>
+                    <td><b>${h.cliente}</b></td>
+                    <td class="mono">${h.telefone}</td>
+                    <td><span class="badge ${h.status === 'enviado' ? 'badge-green' : 'badge-red'}">${h.status === 'enviado' ? '✅ Enviado' : '❌ Falha'}</span></td>
+                </tr>
+            `).join('');
+        }
+    }).catch(e => console.error('Erro ao carregar histórico:', e));
+}
+
+function renderTemplates() {
+    const div = $('templatesGrid');
+    if (templates.length === 0) {
+        div.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📝</div>Nenhum template criado</div>';
+        return;
+    }
+    div.innerHTML = templates.map((t, i) => `
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div style="font-weight:600">📝 ${t.nome}</div>
+                <button class="btn btn-sm btn-danger" onclick="delTemp(${i})">🗑️</button>
+            </div>
+            <div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.7;max-height:150px;overflow-y:auto;padding:10px;background:var(--bg5);border-radius:6px">${t.msg}</div>
+        </div>
+    `).join('');
+    $('dashTemplates').textContent = templates.length;
+    renderSelects();
+}
+
+function renderClientes() {
+    const tb = $('clientesTbody');
+    if (!Array.isArray(clientes)) clientes = [];
+    
+    const busca = ($('searchClientes')?.value || '').toLowerCase();
+    const filtrados = clientes.filter(c => c && c.nome && c.nome.toLowerCase().includes(busca));
+    
+    $('totalClientesBadge').textContent = clientes.length + ' clientes';
+    $('dashClientes').textContent = clientes.length;
+    
+    if (filtrados.length === 0) {
+        tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">' + 
+            (busca ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado') + '</td></tr>';
+        return;
+    }
+    
+    tb.innerHTML = filtrados.map(c => {
+        const idx = clientes.indexOf(c);
+        const dataCad = c.data ? new Date(c.data).toLocaleDateString('pt-BR') : '-';
+        return `
+            <tr>
+                <td><b>${c.nome}</b></td>
+                <td class="mono">${c.tel}</td>
+                <td>${c.cidade || '-'}</td>
+                <td>${dataCad}</td>
+                <td>
+                    <div style="display:flex;gap:6px">
+                        <button class="btn btn-sm btn-ghost" onclick="editCli(${idx})">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="delCli(${idx})">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderDisparo() {
+    const tb = $('disparoTbody');
+    if (!Array.isArray(clientes)) clientes = [];
+    
+    const busca = ($('searchDisparo')?.value || '').toLowerCase();
+    const filtrados = clientes.filter(c => c && c.nome && c.nome.toLowerCase().includes(busca));
+    
+    if (filtrados.length === 0) {
+        tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Nenhum cliente</td></tr>';
+        return;
+    }
+    
+    tb.innerHTML = filtrados.map(c => {
+        const idx = clientes.indexOf(c);
+        return `
+            <tr>
+                <td><input type="checkbox" class="dcheck" data-i="${idx}"></td>
+                <td><b>${c.nome}</b></td>
+                <td class="mono">${c.tel}</td>
+                <td>${c.cidade || '-'}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    updateSel();
+}
+
+function renderSelects() {
+    const st = $('disparoTemplate');
+    if (st) {
+        st.innerHTML = templates.length === 0 
+            ? '<option value="">Nenhum template cadastrado</option>' 
+            : '<option value="">Selecione um template...</option>' + 
+              templates.map((t, i) => `<option value="${i}">${t.nome}</option>`).join('');
+    }
+}
+
+function selTodos() {
+    document.querySelectorAll('.dcheck').forEach(c => c.checked = true);
+    updateSel();
+}
+
+function limparSel() {
+    document.querySelectorAll('.dcheck').forEach(c => c.checked = false);
+    updateSel();
+}
+
+function updateSel() {
+    const count = document.querySelectorAll('.dcheck:checked').length;
+    $('selCount').textContent = count + ' selecionado(s)';
+}
+
+// ==================== CRUD CLIENTES ====================
+function novoCli() {
+    $('editIdx').value = '-1';
+    $('modalClienteTitulo').textContent = '👤 Novo Cliente';
+    $('cliNome').value = '';
+    $('cliTel').value = '';
+    $('cliCid').value = '';
+    $('errNome').classList.remove('show');
+    $('errTel').classList.remove('show');
+    abrirModal('modalCliente');
+    setTimeout(() => $('cliNome').focus(), 200);
+}
+
+function editCli(idx) {
+    if (idx < 0 || idx >= clientes.length) return;
+    const c = clientes[idx];
+    $('editIdx').value = idx;
+    $('modalClienteTitulo').textContent = '✏️ Editar Cliente';
+    $('cliNome').value = c.nome || '';
+    $('cliTel').value = c.tel || '';
+    $('cliCid').value = c.cidade || '';
+    $('errNome').classList.remove('show');
+    $('errTel').classList.remove('show');
+    abrirModal('modalCliente');
+}
+
+async function salvarCli() {
+    const nome = $('cliNome').value.trim();
+    const tel = $('cliTel').value.trim().replace(/\D/g, '');
+    const cidade = $('cliCid').value.trim();
+    const idx = parseInt($('editIdx').value);
+    
+    $('errNome').classList.remove('show');
+    $('errTel').classList.remove('show');
+    
+    if (!nome) { $('errNome').classList.add('show'); toast('Preencha o nome!', 'err'); return; }
+    if (!tel || tel.length < 10) { $('errTel').classList.add('show'); toast('Telefone inválido!', 'err'); return; }
+    
+    if (!Array.isArray(clientes)) clientes = [];
+    
+    if (idx >= 0 && idx < clientes.length) {
+        clientes[idx] = { ...clientes[idx], nome, tel, cidade };
+    } else {
+        clientes.push({ nome, tel, cidade, data: new Date().toISOString() });
+    }
+    
+    try {
+        await db.ref('clientes').set(clientes);
+        $('cliNome').value = ''; $('cliTel').value = ''; $('cliCid').value = '';
+        fecharModal('modalCliente');
+        renderClientes(); renderDisparo();
+        toast('Cliente salvo!', 'ok');
+    } catch (error) {
+        console.error('Erro:', error);
+        toast('Erro ao salvar!', 'err');
+    }
+}
+
+async function delCli(idx) {
+    if (!confirm('Remover cliente?')) return;
+    clientes.splice(idx, 1);
+    await db.ref('clientes').set(clientes);
+    renderClientes(); renderDisparo();
+    toast('Removido!', 'ok');
+}
+
+async function salvarTemp() {
+    const nome = $('tempNome').value.trim();
+    const msg = $('tempMsg').value.trim();
+    if (!nome || !msg) { toast('Preencha!', 'err'); return; }
+    templates.push({ nome, msg });
+    await db.ref('templates').set(templates);
+    $('tempNome').value = ''; $('tempMsg').value = '';
+    fecharModal('modalTemplate');
+    renderTemplates(); renderSelects();
+    toast('Template salvo!', 'ok');
+}
+
+async function delTemp(idx) {
+    if (!confirm('Remover?')) return;
+    templates.splice(idx, 1);
+    await db.ref('templates').set(templates);
+    renderTemplates(); renderSelects();
+}
+
+async function importCSV() {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.csv,.txt';
+    inp.onchange = async e => {
+        const f = e.target.files[0]; if (!f) return;
+        const t = await f.text(); let a = 0;
+        t.split('\n').filter(l => l.trim()).forEach(l => {
+            const p = l.split(',');
+            if (p.length >= 2) {
+                const n = p[0].trim(), tel = p[1].trim().replace(/\D/g, '');
+                if (n && tel.length >= 10 && !clientes.some(c => c.tel === tel)) {
+                    clientes.push({ nome: n, tel, cidade: p[2]?.trim() || '', data: new Date().toISOString() });
+                    a++;
+                }
+            }
+        });
+        await db.ref('clientes').set(clientes);
+        renderClientes(); renderDisparo();
+        toast(a + ' importados!', 'ok');
+    };
+    inp.click();
+}
+
+// ==================== CARREGAR DADOS ====================
+async function carregarDados() {
+    try {
+        const [snapTemplates, snapClientes, snapConfig, snapHistorico, snapTotal] = await Promise.all([
+            db.ref('templates').get(),
+            db.ref('clientes').get(),
+            db.ref('config/api').get(),
+            db.ref('historico').get(),
+            db.ref('config/totalEnviado').get()
+        ]);
+        
+        if (snapTemplates.exists()) templates = toArray(snapTemplates.val());
+        if (snapClientes.exists()) clientes = toArray(snapClientes.val());
+        
+        if (snapConfig.exists()) {
+            const cfg = snapConfig.val();
+            serverUrl = cfg.serverUrl || '';
+            apiKey = cfg.apiKey || '';
+            apiPhone = cfg.apiPhone || '';
+            apiIntervalo = cfg.apiIntervalo || 30;
+        }
+        
+        if (snapTotal.exists()) totalEnviado = snapTotal.val() || 0;
+        
+        if (snapHistorico.exists()) {
+            const historico = toArray(snapHistorico.val());
+            const hoje = new Date().toDateString();
+            enviosHoje = historico.filter(h => 
+                new Date(h.data).toDateString() === hoje && h.status === 'enviado'
+            ).length;
+        }
+        
+        atualizarStatusAPI();
+        renderTemplates();
+        renderClientes();
+        renderSelects();
+        renderDashboard();
+        
+    } catch (error) {
+        console.error('Erro ao carregar:', error);
+    }
+}
+
+// ==================== EVENTOS ====================
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            go(this.getAttribute('data-page'));
+        });
+    });
+    
+    $('btnSalvarApi').addEventListener('click', salvarConfigAPI);
+    $('btnDisparar').addEventListener('click', iniciarDisparo);
+    $('selAll').addEventListener('change', function() {
+        document.querySelectorAll('.dcheck').forEach(c => c.checked = this.checked);
+        updateSel();
+    });
+    $('searchDisparo').addEventListener('input', renderDisparo);
+    $('btnAddTemplate').addEventListener('click', () => abrirModal('modalTemplate'));
+    $('btnSalvarTemp').addEventListener('click', salvarTemp);
+    $('btnAddCliente').addEventListener('click', novoCli);
+    $('btnSalvarCli').addEventListener('click', salvarCli);
+    $('btnImportCSV').addEventListener('click', importCSV);
+    $('searchClientes').addEventListener('input', renderClientes);
+    
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', function(e) {
+            if (e.target === m) m.classList.remove('open');
+        });
+    });
+    
+    carregarDados();
+});
+</script>
+</body>
+</html>
