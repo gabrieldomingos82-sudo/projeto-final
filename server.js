@@ -31,13 +31,22 @@ function getChromePath() {
         return process.env.PUPPETEER_EXECUTABLE_PATH;
     }
 
+    // No Render, o build e o runtime usam filesystems diferentes - apenas a
+    // pasta do projeto (/opt/render/project/src) é copiada do build para o
+    // runtime. Por isso o cache padrão do Puppeteer (~/.cache ou
+    // /opt/render/.cache, fora dessa pasta) se perde entre build e runtime.
+    // A variável PUPPETEER_CACHE_DIR (configurada no Render, ver README)
+    // deve apontar para dentro da pasta do projeto para persistir.
     const candidatos = [
+        process.env.PUPPETEER_CACHE_DIR,
+        path.join(__dirname, '.cache/puppeteer'),
+        '/opt/render/project/src/.cache/puppeteer',
         path.join(process.env.HOME || '', '.cache/puppeteer'),
-        '/opt/render/.cache/puppeteer',
-        '/opt/render/project/src/.cache/puppeteer'
+        '/opt/render/.cache/puppeteer'
     ].filter(Boolean);
 
     console.log('🔍 HOME =', process.env.HOME);
+    console.log('🔍 PUPPETEER_CACHE_DIR =', process.env.PUPPETEER_CACHE_DIR);
     console.log('🔍 Procurando Chrome em:', candidatos);
 
     for (const base of candidatos) {
@@ -69,19 +78,7 @@ function getChromePath() {
         }
     }
 
-    console.warn('⚠️ Não foi possível localizar o Chrome automaticamente. Tentando caminho fixo conhecido...');
-
-    // Último recurso: caminho exato confirmado no log de build do Render.
-    // Mesmo que a detecção dinâmica falhe (ex.: build e runtime em
-    // ambientes/contêineres ligeiramente diferentes), tentamos esse caminho
-    // direto antes de desistir.
-    const fallbackFixo = '/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome';
-    if (fs.existsSync(fallbackFixo)) {
-        console.log('✅ Chrome encontrado via fallback fixo:', fallbackFixo);
-        return fallbackFixo;
-    }
-
-    console.warn('⚠️ Fallback fixo também não encontrado. Usando o padrão do Puppeteer.');
+    console.warn('⚠️ Não foi possível localizar o Chrome em nenhum caminho conhecido. Usando o padrão do Puppeteer (provavelmente vai falhar).');
     return undefined;
 }
 
