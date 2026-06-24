@@ -44,7 +44,11 @@ function getChromePath() {
             const versoes = fs.readdirSync(chromeDir);
             for (const v of versoes) {
                 const possivel = path.join(chromeDir, v, 'chrome-linux64', 'chrome');
-                if (fs.existsSync(possivel)) return possivel;
+                // Confirma que o arquivo existe E tem tamanho > 0 (evita pastas
+                // "fantasma" de downloads que falharam pela metade)
+                if (fs.existsSync(possivel) && fs.statSync(possivel).size > 0) {
+                    return possivel;
+                }
             }
         } catch (e) {
             // ignora e tenta o próximo candidato
