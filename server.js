@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
@@ -18,6 +19,42 @@ let waReady = false;
 let waInfo = { phone: '', name: '' };
 let lastQr = null;
 
+// ==================== LOCALIZAR O EXECUTÁVEL DO CHROME ====================
+// Em produção (Render), o Chrome é baixado pelo Puppeteer durante o
+// "npm install" e fica salvo em ~/.cache/puppeteer. Esse cache às vezes não
+// é encontrado automaticamente pelo whatsapp-web.js, então procuramos o
+// binário manualmente nos locais mais comuns e apontamos o caminho exato -
+// isso evita o erro "Could not find Chrome".
+function getChromePath() {
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        return process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+
+    const candidatos = [
+        path.join(process.env.HOME || '/opt/render', '.cache/puppeteer'),
+        '/opt/render/.cache/puppeteer'
+    ];
+
+    for (const base of candidatos) {
+        try {
+            if (!fs.existsSync(base)) continue;
+            const chromeDir = path.join(base, 'chrome');
+            if (!fs.existsSync(chromeDir)) continue;
+            // estrutura típica: <base>/chrome/linux-<versão>/chrome-linux64/chrome
+            const versoes = fs.readdirSync(chromeDir);
+            for (const v of versoes) {
+                const possivel = path.join(chromeDir, v, 'chrome-linux64', 'chrome');
+                if (fs.existsSync(possivel)) return possivel;
+            }
+        } catch (e) {
+            // ignora e tenta o próximo candidato
+        }
+    }
+
+    console.warn('⚠️ Não foi possível localizar o Chrome automaticamente. Usando o padrão do Puppeteer.');
+    return undefined;
+}
+
 // ==================== CRIAÇÃO DO CLIENTE WHATSAPP ====================
 // Usa LocalAuth para persistir a sessão em disco (./.wwebjs_auth),
 // assim depois de escanear o QR Code uma vez, reinícios do processo
@@ -29,6 +66,7 @@ function criarClienteWhatsApp() {
         authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
         puppeteer: {
             headless: true,
+            executablePath: getChromePath(),
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
