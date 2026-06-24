@@ -1,31 +1,32 @@
 const express = require('express');
-const cors = require('cors');
 const http = require('http');
-const socketIO = require('socket.io');
 const path = require('path');
-const QRCode = require('qrcode');
+const { Server } = require('socket.io');
 const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = new Server(server);
 
-app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// ==================== WHATSAPP CLIENT ====================
-let client = null;
-let isReady = false;
-let qrCodeData = null;
+// ==================== ESTADO GLOBAL DO WHATSAPP ====================
+let waClient = null;
+let waReady = false;
+let waInfo = { phone: '', name: '' };
+let lastQr = null;
 
-function criarCliente() {
-    if (client) {
-        try { client.destroy(); } catch(e) {}
-    }
-    
-    client = new Client({
-        authStrategy: new LocalAuth({ dataPath: './whatsapp-session' }),
+// ==================== CRIAÇÃO DO CLIENTE WHATSAPP ====================
+// Usa LocalAuth para persistir a sessão em disco (./.wwebjs_auth),
+// assim depois de escanear o QR Code uma vez, reinícios do processo
+// (ex.: deploy novo no Render) não exigem escanear de novo - só
+// se o disco for limpo (no Render free, o disco É temporário entre
+// deploys, mas sobrevive a "sleeps" por inatividade).
+function criarClienteWhatsApp() {
+    waClient = new Client({
+        authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
         puppeteer: {
             headless: true,
             args: [
@@ -33,101 +34,166 @@ function criarCliente() {
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
                 '--no-first-run',
                 '--no-zygote',
                 '--single-process',
-                '--disable-gpu'
-            ],
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+                '--disable-extensions',
+                '--disable-background-networking',
+                '--disable-default-apps',
+                '--disable-sync',
+                '--disable-translate',
+                '--metrics-recording-only',
+                '--mute-audio',
+                '--js-flags=--max-old-space-size=256'
+            ]
         }
     });
 
-    client.on('qr', async (qr) => {
-        console.log('QR Code gerado!');
-        qrCodeData = await QRCode.toDataURL(qr);
-        io.emit('whatsapp-status', { connected: false, qr: qrCodeData, message: 'Escaneie o QR Code' });
+    waClient.on('qr', async (qr) => {
+        console.log('📱 Novo QR Code gerado');
+        lastQr = await qrcode.toDataURL(qr);
+        waReady = false;
+        io.emit('whatsapp-status', { connected: false, qr: lastQr });
     });
 
-    client.on('ready', () => {
+    waClient.on('ready', () => {
         console.log('✅ WhatsApp conectado!');
-        isReady = true;
-        qrCodeData = null;
-        io.emit('whatsapp-status', { connected: true, qr: null, phone: client.info.wid.user, name: client.info.pushname, message: 'Conectado!' });
+        waReady = true;
+        lastQr = null;
+        const info = waClient.info;
+        waInfo = {
+            phone: info?.wid?.user || '',
+            name: info?.pushname || ''
+        };
+        io.emit('whatsapp-status', {
+            connected: true,
+            phone: waInfo.phone,
+            name: waInfo.name
+        });
     });
 
-    client.on('disconnected', () => {
-        console.log('WhatsApp desconectado');
-        isReady = false;
-        io.emit('whatsapp-status', { connected: false, qr: null, message: 'Desconectado' });
+    waClient.on('authenticated', () => {
+        console.log('🔐 Sessão autenticada');
     });
 
-    client.initialize().catch(err => {
-        console.error('Erro ao iniciar:', err.message);
+    waClient.on('disconnected', (reason) => {
+        console.log('❌ WhatsApp desconectado:', reason);
+        waReady = false;
+        waInfo = { phone: '', name: '' };
+        io.emit('whatsapp-status', { connected: false });
     });
+
+    waClient.on('auth_failure', (msg) => {
+        console.error('❌ Falha na autenticação:', msg);
+        waReady = false;
+        io.emit('whatsapp-status', { connected: false });
+    });
+
+    waClient.initialize().catch(err => {
+        console.error('❌ Erro ao inicializar WhatsApp:', err);
+    });
+}
+
+criarClienteWhatsApp();
+
+// ==================== HELPER: FORMATAR NÚMERO ====================
+function formatarNumero(phone) {
+    const digits = String(phone).replace(/\D/g, '');
+    return digits.includes('@c.us') ? digits : `${digits}@c.us`;
 }
 
 // ==================== SOCKET.IO ====================
 io.on('connection', (socket) => {
-    console.log('🟢 Cliente conectado');
-    
-    socket.emit('whatsapp-status', {
-        connected: isReady,
-        qr: qrCodeData,
-        phone: isReady && client ? client.info.wid.user : null,
-        name: isReady && client ? client.info.pushname : null,
-        message: isReady ? 'Conectado!' : 'Aguardando QR Code...'
-    });
-    
-    socket.on('send-message', async (data) => {
-        if (!isReady || !client) {
-            socket.emit('message-result', { success: false, error: 'WhatsApp não conectado!' });
-            return;
-        }
+    console.log('🔌 Cliente conectado ao painel:', socket.id);
+
+    // Envia o status atual assim que o painel abre/recarrega
+    socket.emit('whatsapp-status', waReady
+        ? { connected: true, phone: waInfo.phone, name: waInfo.name }
+        : { connected: false, qr: lastQr || undefined }
+    );
+
+    // ---- Reconectar / gerar novo QR Code ----
+    socket.on('reconnect-whatsapp', async () => {
         try {
-            const chatId = data.phone.includes('@c.us') ? data.phone : data.phone + '@c.us';
-            await client.sendMessage(chatId, data.message);
-            socket.emit('message-result', { success: true, phone: data.phone });
-        } catch (error) {
-            socket.emit('message-result', { success: false, error: error.message });
+            if (waClient) {
+                await waClient.destroy().catch(() => {});
+            }
+        } finally {
+            waReady = false;
+            lastQr = null;
+            criarClienteWhatsApp();
         }
     });
-    
-    socket.on('send-bulk', async (data) => {
-        if (!isReady || !client) {
-            socket.emit('bulk-done', { success: false, error: 'WhatsApp não conectado!' });
+
+    // ---- Desconectar ----
+    socket.on('disconnect-whatsapp', async () => {
+        try {
+            if (waClient) {
+                await waClient.logout().catch(() => {});
+            }
+        } finally {
+            waReady = false;
+            waInfo = { phone: '', name: '' };
+            lastQr = null;
+            io.emit('whatsapp-status', { connected: false });
+        }
+    });
+
+    // ---- Disparo em massa ----
+    socket.on('send-bulk', async ({ messages, delay }) => {
+        if (!waReady || !waClient) {
+            socket.emit('bulk-done', { sent: 0, error: 'WhatsApp não está conectado' });
             return;
         }
-        const { messages, delay } = data;
-        let sent = 0, failed = 0;
+
+        const intervaloMs = Math.max(parseInt(delay) || 30, 10) * 1000;
+        let enviados = 0;
+
         for (let i = 0; i < messages.length; i++) {
             const msg = messages[i];
             try {
-                const chatId = msg.phone.includes('@c.us') ? msg.phone : msg.phone + '@c.us';
-                await client.sendMessage(chatId, msg.message);
-                sent++;
-                socket.emit('bulk-progress', { current: i + 1, total: messages.length, sent, failed, name: msg.name || msg.phone });
-                console.log(`✅ [${i+1}/${messages.length}] ${msg.name || msg.phone}`);
-            } catch (error) {
-                failed++;
-                console.error(`❌ ${msg.name || msg.phone}:`, error.message);
+                const numero = formatarNumero(msg.phone);
+                const isRegistered = await waClient.isRegisteredUser(numero);
+
+                if (isRegistered) {
+                    await waClient.sendMessage(numero, msg.message);
+                    enviados++;
+                } else {
+                    console.warn(`⚠️ Número não encontrado no WhatsApp: ${msg.phone}`);
+                }
+            } catch (err) {
+                console.error(`❌ Erro ao enviar para ${msg.phone}:`, err.message);
             }
-            if (i < messages.length - 1) await new Promise(r => setTimeout(r, (delay || 30) * 1000));
+
+            io.emit('bulk-progress', {
+                current: i + 1,
+                total: messages.length,
+                name: msg.name,
+                phone: msg.phone
+            });
+
+            // Aguarda o intervalo configurado antes do próximo envio
+            // (evita bloqueio por excesso de mensagens em curto espaço de tempo)
+            if (i < messages.length - 1) {
+                await new Promise(r => setTimeout(r, intervaloMs));
+            }
         }
-        socket.emit('bulk-done', { success: true, total: messages.length, sent, failed });
-        console.log(`✅ Lote concluído! ${sent}/${messages.length}`);
+
+        io.emit('bulk-done', { sent: enviados, total: messages.length });
     });
-    
-    socket.on('reconnect-whatsapp', () => { console.log('🔄 Reiniciando...'); criarCliente(); });
-    
-    socket.on('disconnect-whatsapp', async () => {
-        if (client) { try { await client.logout(); await client.destroy(); } catch(e) {} }
-        isReady = false; client = null; qrCodeData = null;
-        io.emit('whatsapp-status', { connected: false, qr: null, message: 'Desconectado' });
+
+    socket.on('disconnect', () => {
+        console.log('🔌 Cliente desconectado do painel:', socket.id);
     });
+});
+
+// ==================== ROTA DE STATUS (DEBUG) ====================
+app.get('/api/status', (req, res) => {
+    res.json({ connected: waReady, ...waInfo });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log('🚀 ADEMICON rodando na porta ' + PORT);
-    criarCliente();
+    console.log('🚀 Servidor ADEMICON rodando na porta ' + PORT);
 });
