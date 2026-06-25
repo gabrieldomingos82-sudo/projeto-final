@@ -26,33 +26,8 @@ let lastQr = null;
 // binário manualmente nos locais mais comuns e apontamos o caminho exato -
 // isso evita o erro "Could not find Chrome".
 function getChromePath() {
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        console.log('🔍 Usando PUPPETEER_EXECUTABLE_PATH:', process.env.PUPPETEER_EXECUTABLE_PATH);
-        return process.env.PUPPETEER_EXECUTABLE_PATH;
-    }
-
-    const candidatos = [
-        '/app/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome',
-        '/root/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome',
-        '/opt/render/project/src/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome'
-    ];
-
-    console.log('🔍 Procurando Chrome em:', candidatos);
-
-    for (const caminho of candidatos) {
-        try {
-            if (fs.existsSync(caminho)) {
-                const tamanho = fs.statSync(caminho).size;
-                console.log(`✅ Chrome encontrado em: ${caminho} (${tamanho} bytes)`);
-                return caminho;
-            }
-        } catch (e) {
-            console.log(`🔍 Testando ${caminho} -> não encontrado`);
-        }
-    }
-
-    console.warn('⚠️ Chrome não encontrado. Deixando Puppeteer usar o padrão...');
-    return undefined;
+    console.log('🔍 Deixando whatsapp-web.js usar o Chrome padrão...');
+    return undefined; // Deixa o whatsapp-web.js cuidar disso
 }
 
 // ==================== CRIAÇÃO DO CLIENTE WHATSAPP ====================
