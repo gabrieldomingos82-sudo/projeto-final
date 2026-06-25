@@ -31,54 +31,27 @@ function getChromePath() {
         return process.env.PUPPETEER_EXECUTABLE_PATH;
     }
 
-    // No Render, o build e o runtime usam filesystems diferentes - apenas a
-    // pasta do projeto (/opt/render/project/src) é copiada do build para o
-    // runtime. Por isso o cache padrão do Puppeteer (~/.cache ou
-    // /opt/render/.cache, fora dessa pasta) se perde entre build e runtime.
-    // A variável PUPPETEER_CACHE_DIR (configurada no Render, ver README)
-    // deve apontar para dentro da pasta do projeto para persistir.
     const candidatos = [
-        process.env.PUPPETEER_CACHE_DIR,
-        path.join(__dirname, '.cache/puppeteer'),
-        '/opt/render/project/src/.cache/puppeteer',
-        path.join(process.env.HOME || '', '.cache/puppeteer'),
-        '/opt/render/.cache/puppeteer'
-    ].filter(Boolean);
+        '/app/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome',
+        '/root/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome',
+        '/opt/render/project/src/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome'
+    ];
 
-    console.log('🔍 HOME =', process.env.HOME);
-    console.log('🔍 PUPPETEER_CACHE_DIR =', process.env.PUPPETEER_CACHE_DIR);
     console.log('🔍 Procurando Chrome em:', candidatos);
 
-    for (const base of candidatos) {
+    for (const caminho of candidatos) {
         try {
-            const existeBase = fs.existsSync(base);
-            console.log(`🔍 ${base} existe?`, existeBase);
-            if (!existeBase) continue;
-
-            const chromeDir = path.join(base, 'chrome');
-            const existeChromeDir = fs.existsSync(chromeDir);
-            console.log(`🔍 ${chromeDir} existe?`, existeChromeDir);
-            if (!existeChromeDir) continue;
-
-            const versoes = fs.readdirSync(chromeDir);
-            console.log('🔍 Versões encontradas:', versoes);
-
-            for (const v of versoes) {
-                const possivel = path.join(chromeDir, v, 'chrome-linux64', 'chrome');
-                const existeArquivo = fs.existsSync(possivel);
-                const tamanho = existeArquivo ? fs.statSync(possivel).size : 0;
-                console.log(`🔍 Testando ${possivel} -> existe: ${existeArquivo}, tamanho: ${tamanho}`);
-                if (existeArquivo && tamanho > 0) {
-                    console.log('✅ Chrome encontrado em:', possivel);
-                    return possivel;
-                }
+            if (fs.existsSync(caminho)) {
+                const tamanho = fs.statSync(caminho).size;
+                console.log(`✅ Chrome encontrado em: ${caminho} (${tamanho} bytes)`);
+                return caminho;
             }
         } catch (e) {
-            console.log(`🔍 Erro ao verificar ${base}:`, e.message);
+            console.log(`🔍 Testando ${caminho} -> não encontrado`);
         }
     }
 
-    console.warn('⚠️ Não foi possível localizar o Chrome em nenhum caminho conhecido. Usando o padrão do Puppeteer (provavelmente vai falhar).');
+    console.warn('⚠️ Chrome não encontrado. Deixando Puppeteer usar o padrão...');
     return undefined;
 }
 
