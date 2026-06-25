@@ -83,11 +83,12 @@ function getChromePath() {
 }
 
 // ==================== CRIAÇÃO DO CLIENTE WHATSAPP ====================
-// Usa LocalAuth para persistir a sessão em disco (./.wwebjs_auth),
-// assim depois de escanear o QR Code uma vez, reinícios do processo
-// (ex.: deploy novo no Render) não exigem escanear de novo - só
-// se o disco for limpo (no Render free, o disco É temporário entre
-// deploys, mas sobrevive a "sleeps" por inatividade).
+// Usa LocalAuth para persistir a sessão em disco (./.wwebjs_auth). IMPORTANTE:
+// no plano FREE do Render, o disco é completamente temporário - qualquer
+// reinício do processo (sleep por inatividade, falta de memória, ou um novo
+// deploy) apaga essa pasta e exige escanear o QR Code de novo. Isso é uma
+// limitação do plano free do Render, não do código - só planos pagos com
+// "Persistent Disk" mantêm a sessão entre reinícios.
 function criarClienteWhatsApp() {
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
@@ -105,12 +106,26 @@ function criarClienteWhatsApp() {
                 '--single-process',
                 '--disable-extensions',
                 '--disable-background-networking',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-breakpad',
+                '--disable-component-extensions-with-background-pages',
                 '--disable-default-apps',
+                '--disable-features=site-per-process,TranslateUI,BlinkGenPropertyTrees',
+                '--disable-hang-monitor',
+                '--disable-ipc-flooding-protection',
+                '--disable-popup-blocking',
+                '--disable-prompt-on-repost',
+                '--disable-renderer-backgrounding',
                 '--disable-sync',
                 '--disable-translate',
+                '--force-color-profile=srgb',
                 '--metrics-recording-only',
                 '--mute-audio',
-                '--js-flags=--max-old-space-size=256'
+                '--no-default-browser-check',
+                '--password-store=basic',
+                '--use-mock-keychain',
+                '--js-flags=--max-old-space-size=200'
             ]
         }
     });
